@@ -22,6 +22,7 @@ func main () {
 
 	rd := csv.NewReader (os.Stdin)
     rd.Comma, rd.Comment, rd.FieldsPerRecord  = '\t', '!', -1
+	rd.LazyQuotes = true
 
 	for {
 		record, err := rd.Read ()
