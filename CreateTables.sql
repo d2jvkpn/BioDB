@@ -20,7 +20,7 @@ create table GO (
 );
 
 
-create table TaxonID (
+create table Taxon (
     taxon_id         int           not null,
     scientific_name  varchar(255)  not null,
     common_name      varchar(255),
