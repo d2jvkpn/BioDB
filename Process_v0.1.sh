@@ -13,4 +13,4 @@ pigz -dc goa_uniprot_all.gaf.gz | go run Table_GO_v0.4.go
 # 1858425 records
 sed 's/\t|\t/\t/g; s/|$//' taxdump/names.dmp |
 awk 'BEGIN{FS=OFS="\t"} $4=="scientific name"{print $1, $2}' |
-go run Table_Taxon_v0.1.go
+go run Table_Taxon_v0.2.go
