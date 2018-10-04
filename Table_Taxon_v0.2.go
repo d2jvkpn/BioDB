@@ -4,6 +4,7 @@ import (
 	"os"
 	"io"
 	"log"
+	"strings"
 	"encoding/csv"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
@@ -29,7 +30,9 @@ func main () {
 		if err == io.EOF { break }
 		if err != nil { log.Println (err); continue }
 
-		
+		record[1] = strings.Replace(record[1], "'", "%27", -1)
+		record[1] = strings.Replace(record[1], "'", "%22", -1)
+
 		_, err = stmt.Exec (record[0], record[1])
 		if err != nil {log.Println (err)}
 	}
