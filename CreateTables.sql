@@ -13,7 +13,8 @@ create table GO (
     GO_id        nchar(10)        not null,
     prot_id      varchar(255),
     class        nchar(1),
-    genes        varchar(255),
+    -- product   varchar(255),
+    genes        varchar(255)     not null,
     taxon_id     int              not null,
     check        (taxon_id > 0),
     primary key  (id)
@@ -23,14 +24,20 @@ create table GO (
 create table Taxon (
     taxon_id         int           not null,
     scientific_name  varchar(255)  not null,
-    common_name      varchar(255),
+    -- common_name      varchar(255),
     lineage          varchar(255),
     primary key      (taxon_id)
 );
 
+create table Pathway_code (
+    code         varchar(63)   not null,
+    oragnism     varchar(255)  not null,
+    primary key  (code)
+);
 
-create table Pathway (
-    code             varchar(63),
+
+create table Pathway_infor (
+    code             varchar(63)     not null,
     C_id             varchar(63)     not null,
     C_name           varchar(255),       
     A_id             varchar(63),
@@ -40,7 +47,7 @@ create table Pathway (
     gene_id          varchar(63)     not null,
     gene_name        varchar(63),
     gene_desciption  varchar(255),
-    KO_id             varchar(63),
+    KO_id            varchar(63),
     KO_description   varchar(255),
     EC_id            varchar(63)
 );
