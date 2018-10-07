@@ -23,7 +23,7 @@ func main () {
 	if err != nil { log.Fatal(err) }
 
 	rd := csv.NewReader (os.Stdin)
-    rd.Comma, rd.Comment, rd.FieldsPerRecord  = '\t', '!', -1
+	rd.Comma, rd.Comment, rd.FieldsPerRecord  = '\t', '!', -1
 	var wg sync.WaitGroup
 	ch := make (chan struct{}, 50)
 
