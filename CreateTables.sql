@@ -13,7 +13,7 @@ create table GO (
     GO_id        nchar(10)        not null,
     prot_id      varchar(255),
     class        nchar(1),
-    -- product   varchar(255),
+    --product      varchar(255),
     genes        varchar(255)     not null,
     taxon_id     int              not null,
     check        (taxon_id > 0),
@@ -24,7 +24,7 @@ create table GO (
 create table Taxon (
     taxon_id         int           not null,
     scientific_name  varchar(255)  not null,
-    -- common_name      varchar(255),
+    --common_name      varchar(255),
     lineage          varchar(255),
     primary key      (taxon_id)
 );
