@@ -6,13 +6,14 @@ import (
 	"log"
 	"strings"
 	"encoding/csv"
+	"net/url"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 
 func main () {
-	db, err := sql.Open("mysql", "hello:world@/BioDB")
+	db, err := sql.Open("mysql", "hello:@/BioDB")
 	if err != nil { log.Fatal (err) }
 	defer db.Close()
 
@@ -30,9 +31,7 @@ func main () {
 		if err == io.EOF { break }
 		if err != nil { log.Println (err); continue }
 
-		record[1] = strings.Replace(record[1], "'", "%27", -1)
-		record[1] = strings.Replace(record[1], "\"", "%22", -1)
-
+		record[1] = url.QueryEscape (strings.ToLower (record[1]))
 		_, err = stmt.Exec (record[0], record[1])
 		if err != nil {log.Println (err)}
 	}
