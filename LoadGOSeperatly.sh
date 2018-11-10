@@ -19,6 +19,7 @@ date
 
 exit
 
+locad xaa.GO.tsv
 -- Query OK, 49999635 rows affected, 365 warnings (5 min 42.88 sec)
 -- Records: 50000000  Deleted: 0  Skipped: 365  Warnings: 365
 
