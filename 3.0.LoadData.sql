@@ -9,5 +9,3 @@ alter table BioDB.Taxonomy add index escape_name (escape_name);
 
 load data local infile 'GO.tsv' into table BioDB.GO 
 (taxon_id, genes, GO_id);
--- Query OK, 49999635 rows affected, 365 warnings (5 min 42.88 sec)
--- Records: 50000000  Deleted: 0  Skipped: 365  Warnings: 365
