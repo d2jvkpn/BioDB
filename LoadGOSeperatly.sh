@@ -12,9 +12,9 @@ date
     echo "load data local infile '$i' into table BioDB.GO (taxon_id, genes, GO_id);"
   done
   echo "alter table BioDB.Taxonomy_GO add index taxon_id (taxon_id);"
-} > LoadGO.sql
+} > load_GO.sql
 
-mysql -u hello < LoadGO.sql
+mysql -u hello < load_GO.sql
 date
 
 exit
