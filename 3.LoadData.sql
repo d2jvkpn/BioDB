@@ -7,5 +7,7 @@ alter table BioDB.Taxonomy add index escape_name (escape_name);
 -- Query OK, 0 rows affected, 1 warning (8.97 sec)     
 -- Records: 0  Duplicates: 0  Warnings: 1
 
-load data local infile 'GO.tsv' into table BioDB.GO 
+
+-- pigz -dc GO.tsv.gz | sed '1d' > go.tsv
+load data local infile 'go.tsv' into table BioDB.GO 
 (taxon_id, genes, GO_id);
