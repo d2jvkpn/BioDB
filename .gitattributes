@@ -1,2 +1,3 @@
 *.sh linguist-language=SQL
 *.go linguist-language=SQL
+*.py linguist-language=SQL
