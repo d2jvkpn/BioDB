@@ -48,7 +48,8 @@ create table Pathway (
     pathway_id       varchar(63)   not null,
     gene_id          varchar(63)   not null,
     gene_name        varchar(63),
-    KO               varchar(63)   not null,
+    KO_id            varchar(63)   not null,
+    KO_def           varchar(255),
     EC_id            varchar(63),
 	constraint Pathway_taxon_id
         foreign key (taxon_id) references Taxonomy (taxon_id)
@@ -65,4 +66,4 @@ create table Pathway_Def (
     primary key    (id)
 ) ENGINE = InnoDB;
 
-select * from BioDB.Pathway_Def where id not regexp '^[ABC][0-9]{5}$'
+-- select * from BioDB.Pathway_Def where id not regexp '^[ABC][0-9]{5}$'
