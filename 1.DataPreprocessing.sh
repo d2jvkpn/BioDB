@@ -21,13 +21,16 @@ wget -c https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
 wget -O new_taxdump_readme.txt \
 https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/taxdump_readme.txt
 
-mkdir new_taxdump
-tar -xf new_taxdump.tar.gz -C new_taxdump
+mkdir tmp
+tar -xf new_taxdump.tar.gz names.dmp nodes.dmp
+mv names.dmp nodes.dmp tmp
 
-sed 's/\t|\t/\t/g; s/|$//' new_taxdump/names.dmp |
+
+
+sed 's/\t|\t/\t/g; s/|$//' tmp/names.dmp |
 awk 'BEGIN{FS=OFS="\t"} $4=="scientific name"{print $1, $2}' > id2name.txt
 
-sed 's/\t|\t/\t/g; s/|$//' new_taxdump/nodes.dmp |
+sed 's/\t|\t/\t/g; s/|$//' tmp/nodes.dmp |
 awk 'BEGIN{FS=OFS="\t"} {print $1,$3,$2}' > id_rank_parent.txt
 
 paste id2name.txt id_rank_parent.txt |
@@ -48,4 +51,4 @@ print "taxon_id", "scientific_name", "taxon_rank", "parent_id"}
 
 go run scientific_name_QueryEscape.go
 
-rm -r id2name.txt id_rank_parent.txt Taxonomy.0.tsv new_taxdump
+rm -r id2name.txt id_rank_parent.txt Taxonomy.0.tsv tmp
