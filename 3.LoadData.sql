@@ -8,5 +8,6 @@ alter table BioDB.Taxonomy add index escape_name (escape_name);
 -- Records: 0  Duplicates: 0  Warnings: 1
 
 
+
 load data local infile 'GO.tsv' into table BioDB.GO ignore 1 lines
 (taxon_id, genes, GO_id);
