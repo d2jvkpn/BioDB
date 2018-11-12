@@ -9,7 +9,7 @@ import (
 )
 
 func main () {
-	frd, err := os.Open("Taxonomy0.tsv")
+	frd, err := os.Open("Taxonomy.0.tsv")
 	if err != nil {log.Fatal(err)}
 	defer frd.Close()
 	r := bufio.NewScanner(frd)
