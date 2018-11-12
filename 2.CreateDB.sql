@@ -1,6 +1,6 @@
 -- author: d2jvkpn
--- version: 0.1
--- release: 2018-10-01
+-- version: 0.2
+-- release: 2018-11-12
 -- project: https://github.com/d2jvkpn/BioDB
 -- license: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 
@@ -14,7 +14,7 @@ insert into mysql.user (User, Password, Host)
 grant all privileges on BioDB.* to 'hello'@'localhost';
 flush privileges;
 
--- mysql -u hello BioDB;
+---- mysql -u hello BioDB;
 
 use BioDB;
 
@@ -27,11 +27,12 @@ create table Taxonomy (
     primary key      (taxon_id)
 ) ENGINE = InnoDB;
 
+----
 create table GO (
     taxon_id     int            not null,
     genes        varchar(1024)  not null,
     GO_id        nchar(10)      not null,
-	constraint taxon_id
+	constraint GO_taxon_id
         foreign key (taxon_id) references Taxonomy (taxon_id)
         on delete cascade
         on update restrict
@@ -44,14 +45,12 @@ show create table GO;
 create table Pathway (
     taxon_id         int           not null,
     orgcode          varchar(7)    not null,
-    lineage          varchar(255)  not null,      
     pathway_id       varchar(63)   not null,
     gene_id          varchar(63)   not null,
     gene_name        varchar(63),
     KO               varchar(63)   not null,
-    KO_description   varchar(255),
-    EC_id            varchar(63)
-	constraint taxon_id
+    EC_id            varchar(63),
+	constraint Pathway_taxon_id
         foreign key (taxon_id) references Taxonomy (taxon_id)
         on delete cascade
         on update restrict
@@ -63,5 +62,7 @@ create table Pathway_Def (
     name           varchar(255)  not null,
     class          char(1)       not null,
     parent_id      char(6)       not null,
-    primary key  (id)
+    primary key    (id)
 ) ENGINE = InnoDB;
+
+select * from BioDB.Pathway_Def where id not regexp '^[ABC][0-9]{5}$'
