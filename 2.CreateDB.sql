@@ -39,7 +39,7 @@ create table GO (
 ) ENGINE = InnoDB;
 
 
-show create table GO;
+-- show create table GO;
 
 ----
 create table Pathway (
