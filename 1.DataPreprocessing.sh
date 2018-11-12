@@ -18,10 +18,11 @@ NR>1{if(length($2)>a) a=length($2)} END{print a, NR}'
 
 ## 2018-11-07, 2003451 records
 wget -c https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+wget -O new_taxdump_readme.txt \
+https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/taxdump_readme.txt
+
 mkdir new_taxdump
 tar -xf new_taxdump.tar.gz -C new_taxdump
-wget -O new_taxdump/taxdump_readme.txt \
-https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/taxdump_readme.txt
 
 sed 's/\t|\t/\t/g; s/|$//' new_taxdump/names.dmp |
 awk 'BEGIN{FS=OFS="\t"} $4=="scientific name"{print $1, $2}' > id2name.txt
@@ -34,7 +35,17 @@ awk -F "\t" '$1!=$3'
 
 paste id2name.txt id_rank_parent.txt | awk 'BEGIN{FS=OFS="\t"; 
 print "taxon_id", "scientific_name", "taxon_rank", "parent_id"}
-{print $1,$2,$4,$5}' > Taxonomy0.tsv
+{print $1,$2,$4,$5}' > Taxonomy.0.tsv
 
-python3 scientific_name_url_quote.py
-rm id2name.txt id_rank_parent.txt Taxonomy0.tsv
+# python3 scientific_name_url_quote.py
+## urllib.parser.quote converts " " with "%20", "+" with "%2B"
+## urllib.quote_plus converts " " with "+", "+" with "%2B"
+## pandas with add double quote to filed when the field contains a quote inside
+##    Nostoc sp. 'Peltigera sp. "hawaiensis" P1236 cyanobiont'
+##    "Nostoc sp. 'Peltigera sp. ""hawaiensis"" P1236 cyanobiont'"
+
+## Golang net/url.QueryEscape converts like
+
+go run scientific_name_QueryEscape.go
+
+rm -r id2name.txt id_rank_parent.txt Taxonomy.0.tsv new_taxdump
