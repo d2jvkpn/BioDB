@@ -12,7 +12,7 @@ mv names.dmp nodes.dmp tmp
 sed 's/\t|\t/\t/g; s/|$//' tmp/names.dmp | awk 'BEGIN{FS=OFS="\t";
 print "taxon_id", "name"} $4=="synonym"{print $1, $2}' > Homotypic_synonym.0.tsv
 
-python3 Homotypic_synonym_urlquote.py
+python3 homotypic_synonym_urlquote.py
 
 sed 's/\t|\t/\t/g; s/|$//' tmp/names.dmp |
 awk 'BEGIN{FS=OFS="\t"} $4=="scientific name"{print $1, $2}' > id2name.txt
