@@ -1,22 +1,6 @@
 #! /bin/bash
-wget -c ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/goa_uniprot_all.gaf.gz
 
-pigz -dc goa_uniprot_all.gaf.gz | awk 'BEGIN{FS=OFS="\t"}
-$11!="" && $11!~" "{sub("taxon:", "", $13); 
-if ($13!~"|") { print $13, $11, $5; next };
-split($13,x,"|"); for(i in x) print x[i], $11, $5}' | uniq > GO0.tsv
-# 350039671
-
-sort -k1,1n -t $'\t' --parallel=16 GO0.tsv | uniq |
-awk 'BEGIN{print "taxon_id", "genes", "GO_id"} {print}' | pigz -c > GO.tsv.gz
-rm GO0.tsv
-
-pigz -dc GO.tsv.gz | awk 'BEGIN{a=0} 
-NR>1{if(length($2)>a) a=length($2)} END{print a, NR}'
-# 538 350040327
-
-
-## 2018-11-07, 2003451 records
+## Taxonomy, 2018-11-07, 2003451 records
 wget -c https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
 wget -O new_taxdump_readme.txt \
 https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/taxdump_readme.txt
@@ -25,7 +9,10 @@ mkdir tmp
 tar -xf new_taxdump.tar.gz names.dmp nodes.dmp
 mv names.dmp nodes.dmp tmp
 
+sed 's/\t|\t/\t/g; s/|$//' tmp/names.dmp | awk 'BEGIN{FS=OFS="\t";
+print "taxon_id", "name"} $4=="synonym"{print $1, $2}' > Homotypic_synonym.0.tsv
 
+python3 Homotypic_synonym_urlquote.py
 
 sed 's/\t|\t/\t/g; s/|$//' tmp/names.dmp |
 awk 'BEGIN{FS=OFS="\t"} $4=="scientific name"{print $1, $2}' > id2name.txt
