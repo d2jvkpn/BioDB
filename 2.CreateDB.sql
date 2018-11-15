@@ -18,14 +18,20 @@ flush privileges;
 
 use BioDB;
 
+create table Taxonomy_homotypic (
+    taxon_id   int           not null,
+    name       varchar(256)  not null
+);
+
 create table Taxonomy (
     taxon_id         int           not null,
-    scientific_name  varchar(255)  not null,
+    syno  varchar(255)  not null,
     taxon_rank       varchar(255)  not null,
     parent_id        int           not null,
     escape_name      varchar(255)  not null,
     primary key      (taxon_id)
 ) ENGINE = InnoDB;
+
 
 ----
 create table GO (
@@ -41,16 +47,13 @@ create table GO (
 
 -- show create table GO;
 
-----
 create table Pathway (
-    taxon_id         int           not null,
-    orgcode          varchar(7)    not null,
-    pathway_id       varchar(63)   not null,
-    gene_id          varchar(63)   not null,
-    gene_name        varchar(63),
-    KO_id            varchar(63)   not null,
-    KO_def           varchar(255),
-    EC_id            varchar(63),
+    taxon_id           int           not null,
+    pathway_id         varchar(32)   not null,
+    gene_id            varchar(64)   not null,
+    KO_id              char(6)       not null,
+    KO_description     varchar(256),
+    EC_ids             varchar(128),
 	constraint Pathway_taxon_id
         foreign key (taxon_id) references Taxonomy (taxon_id)
         on delete cascade
@@ -58,10 +61,9 @@ create table Pathway (
 ) ENGINE = InnoDB;
 
 
-create table Pathway_Def (
+create table Pathway_definition (
     id             char(6)       not null,
     name           varchar(255)  not null,
-    class          char(1)       not null,
     parent_id      char(6)       not null,
     primary key    (id)
 ) ENGINE = InnoDB;
