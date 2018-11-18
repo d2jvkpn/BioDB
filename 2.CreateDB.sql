@@ -52,7 +52,7 @@ create table Pathway (
     pathway_id         varchar(32)   not null,
     gene_id            varchar(64)   not null,
     KO_id              char(6)       not null,
-    KO_description     varchar(256),
+    KO_information     varchar(256),
     EC_ids             varchar(128),
 	constraint Pathway_taxon_id
         foreign key (taxon_id) references Taxonomy (taxon_id)
