@@ -5,11 +5,11 @@ load data local infile 'Taxonomy.tsv' into table BioDB.Taxonomy ignore 1 lines
 
 alter table BioDB.Taxonomy add index escape_name (escape_name);
 
-load data local infile 'Homotypic_synonym.tsv' into table BioDB.homotypic 
+load data local infile 'Homotypic_synonym.tsv' into table BioDB.Taxonomy_homotypic 
 ignore 1 lines (taxon_id, name);
 
-alter table BioDB.homotypic add index taxon_id (taxon_id);
-alter table BioDB.homotypic add index name (name);
+alter table BioDB.Taxonomy_homotypic add index taxon_id (taxon_id);
+alter table BioDB.Taxonomy_homotypic add index name (name);
 
 
 load data local infile 'GO.tsv' into table BioDB.GO ignore 1 lines
