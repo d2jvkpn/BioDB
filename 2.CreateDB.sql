@@ -25,7 +25,7 @@ create table Taxonomy_homotypic (
 
 create table Taxonomy (
     taxon_id         int           not null,
-    syno  varchar(255)  not null,
+    scientific_name  varchar(255)  not null,
     taxon_rank       varchar(255)  not null,
     parent_id        int           not null,
     escape_name      varchar(255)  not null,
