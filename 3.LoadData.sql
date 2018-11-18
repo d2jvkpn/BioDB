@@ -31,12 +31,3 @@ load data local infile 'Pathway_Definition.tsv' into table
 BioDB.Pathway_definition ignore 1 lines;
 
 alter table BioDB.pathway_definition add index id (id);
-
-exit
-
-select * from Pathway order by taxon_id limit 100;
-
-create table P2 like Pathway;
-insert into P2 select * from Pathway order by taxon_id;
-drop table Pathway;
-rename table P2 to Pathway;
