@@ -1,4 +1,3 @@
-
 use BioDB;
 
 select database();
@@ -6,6 +5,7 @@ show variables like 'max_connections';
 select @@datadir;
 
 ---
+show create table GO;
 show columns from GO;
 show index from GO;
 
@@ -49,3 +49,5 @@ insert into P2 select * from Pathway order by taxon_id;
 drop table Pathway;
 rename table P2 to Pathway;
 alter table Pathway change KO_description KO_information varchar(256);
+
+select * from BioDB.Pathway_Def where id not regexp '^[ABC][0-9]{5}$'
