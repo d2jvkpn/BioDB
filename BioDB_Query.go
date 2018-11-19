@@ -19,30 +19,11 @@ const USAGE = `Query BioDB, usage:
     "Pathway"    <taxon_id>
 
 author: d2jvkpn
-version: 0.0.3
+version: 0.0.4
 release: 2018-11-20
 project: https://github.com/d2jvkpn/BioDB
 lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 `
-
-type Taxon_infor struct {
-	Taxon_id, Scientific_name string
-	Taxon_rank, Parent_id     string
-}
-
-type Taxonomy struct {
-	Taxon_infor
-	Escape_name string
-}
-
-type GO struct {
-	Taxon_id, Genes, GO_id string
-}
-
-type Pathway struct {
-	Taxon_id, Pathway_id, Gene_id string
-	KO_id, KO_information, EC_ids string
-}
 
 func main() {
 	if len(os.Args) != 3 {
@@ -53,19 +34,19 @@ func main() {
 	table, taxon := os.Args[1], os.Args[2]
 	isdigital, _ := regexp.MatchString("^[1-9][0-9]*$", taxon)
 	var err error
+	var db *sql.DB
 
-	db, err := sql.Open("mysql", "hello:@/BioDB")
-	if err != nil {
+	if db, err = sql.Open("mysql", "hello:@/BioDB"); err != nil {
 		log.Fatal(err)
 	}
+
 	defer db.Close()
 
 	switch {
 	case isdigital && table == "Taxonomy":
 		var t *Taxonomy
-		t, err = QueryTaxonID(db, taxon)
 
-		if err == nil {
+		if t, err = QueryTaxonID(db, taxon); err == nil {
 			jsbytes, _ := json.MarshalIndent(
 				[]Taxon_infor{t.Taxon_infor}, "", "  ")
 
@@ -88,25 +69,24 @@ func main() {
 }
 
 func QueryTaxonID(db *sql.DB, taxon_id string) (t *Taxonomy, err error) {
-	row := db.QueryRow(
-		fmt.Sprintf("select * from Taxonomy where taxon_id = '%s';", taxon_id),
-	)
-
 	t = new(Taxonomy)
 
-	err = row.Scan(&t.Taxon_id, &t.Scientific_name, &t.Taxon_rank,
-		&t.Parent_id, &t.Escape_name)
+	query := fmt.Sprintf("select * from Taxonomy where taxon_id = '%s';",
+		taxon_id)
+
+	err = db.QueryRow(query).Scan(&t.Taxon_id, &t.Scientific_name,
+		&t.Taxon_rank, &t.Parent_id, &t.Escape_name)
 
 	return
 }
 
 func QueryTaxonName(db *sql.DB, taxon_name string) (err error) {
-	rows, err := db.Query(
-		fmt.Sprintf("select * from Taxonomy where escape_name = '%s';",
-			cmdplus.NameEscape(taxon_name)),
-	)
+	var rows *sql.Rows
 
-	if err != nil {
+	query := fmt.Sprintf("select * from Taxonomy where escape_name = '%s';",
+		cmdplus.NameEscape(taxon_name))
+
+	if rows, err = db.Query(query); err != nil {
 		return
 	}
 	defer rows.Close()
@@ -130,8 +110,7 @@ func QueryTaxonName(db *sql.DB, taxon_name string) (err error) {
 	}
 
 	if len(inforlist) == 0 {
-		inforlist, err = QueryTaxonHomotypic(db, taxon_name)
-		if err != nil {
+		if inforlist, err = QueryTaxonHomotypic(db, taxon_name); err != nil {
 			return
 		}
 	}
@@ -150,22 +129,21 @@ func QueryTaxonHomotypic(db *sql.DB, taxon_name string) (
 	}
 
 	var t *Taxonomy
+	var rows *sql.Rows
 
-	rows, err := db.Query(
-		fmt.Sprintf("select * from Taxonomy_homotypic where name = '%s';",
-			cmdplus.NameEscape(taxon_name)),
-	)
+	query := fmt.Sprintf("select * from Taxonomy_homotypic where name = '%s';",
+		cmdplus.NameEscape(taxon_name))
+
+	if rows, err = db.Query(query); err != nil {
+		return
+	}
 
 	for rows.Next() {
-		err = rows.Scan(&h.id, &h.name)
-
-		if err != nil {
+		if err = rows.Scan(&h.id, &h.name); err != nil {
 			return
 		}
 
-		t, err = QueryTaxonID(db, h.id)
-
-		if err != nil {
+		if t, err = QueryTaxonID(db, h.id); err != nil {
 			return
 		}
 
@@ -173,48 +151,46 @@ func QueryTaxonHomotypic(db *sql.DB, taxon_name string) (
 	}
 
 	err = rows.Err()
-
 	return
 }
 
 func QueryGO(db *sql.DB, taxon_id string) (err error) {
-	rows, err := db.Query(fmt.Sprintf(
-		"select * from GO where taxon_id = '%s';", taxon_id),
-	)
+	var rows *sql.Rows
+	query := fmt.Sprintf("select * from GO where taxon_id = '%s';", taxon_id)
 
-	if err != nil {
+	if rows, err = db.Query(query); err != nil {
 		return
 	}
 	defer rows.Close()
 
 	var t GO
 	fmt.Println("genes\tGO_id")
+
 	for rows.Next() {
-		err = rows.Scan(&t.Taxon_id, &t.Genes, &t.GO_id)
-		if err != nil {
+		if err = rows.Scan(&t.Taxon_id, &t.Genes, &t.GO_id); err != nil {
 			return
 		}
 		fmt.Printf("%s\t%s\n", t.Genes, t.GO_id)
 	}
 
-	if err = rows.Err(); err != nil {
-		return
-	}
+	err = rows.Err()
 	return
 }
 
 func QueryPathway(db *sql.DB, taxon_id string) (err error) {
-	rows, err := db.Query(
-		fmt.Sprintf("select * from Pathway where taxon_id = '%s';", taxon_id),
-	)
+	var rows *sql.Rows
 
-	if err != nil {
+	query := fmt.Sprintf("select * from Pathway where taxon_id = '%s';",
+		taxon_id)
+
+	if rows, err = db.Query(query); err != nil {
 		return
 	}
 	defer rows.Close()
 
 	var t Pathway
 	fmt.Println("pathway_id\tgene_id\tKO_id\tKO_information\tEC_ids")
+
 	for rows.Next() {
 		err = rows.Scan(&t.Taxon_id, &t.Pathway_id, &t.Gene_id, &t.KO_id,
 			&t.KO_information, &t.EC_ids)
@@ -227,8 +203,25 @@ func QueryPathway(db *sql.DB, taxon_id string) (err error) {
 			t.KO_information, t.EC_ids)
 	}
 
-	if err = rows.Err(); err != nil {
-		return
-	}
+	err = rows.Err()
 	return
+}
+
+type Taxon_infor struct {
+	Taxon_id, Scientific_name string
+	Taxon_rank, Parent_id     string
+}
+
+type Taxonomy struct {
+	Taxon_infor
+	Escape_name string
+}
+
+type GO struct {
+	Taxon_id, Genes, GO_id string
+}
+
+type Pathway struct {
+	Taxon_id, Pathway_id, Gene_id string
+	KO_id, KO_information, EC_ids string
 }
