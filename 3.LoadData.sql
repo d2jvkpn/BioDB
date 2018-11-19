@@ -30,3 +30,4 @@ load data local infile 'Pathway_Definition.tsv' into table
 BioDB.Pathway_definition ignore 1 lines;
 
 alter table BioDB.Pathway_definition add index id (id);
+alter table BioDB.Pathway_definition add index name (name);
