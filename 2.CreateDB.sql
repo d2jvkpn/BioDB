@@ -18,11 +18,6 @@ flush privileges;
 
 use BioDB;
 
-create table Taxonomy_homotypic (
-    taxon_id   int           not null,
-    name       varchar(256)  not null
-);
-
 create table Taxonomy (
     taxon_id         int           not null,
     scientific_name  varchar(255)  not null,
@@ -32,6 +27,11 @@ create table Taxonomy (
     primary key      (taxon_id)
 ) ENGINE = InnoDB;
 
+
+create table Taxonomy_homotypic (
+    taxon_id   int           not null,
+    name       varchar(256)  not null
+);
 
 ----
 create table GO (
@@ -44,8 +44,6 @@ create table GO (
         on update restrict
 ) ENGINE = InnoDB;
 
-
--- show create table GO;
 
 create table Pathway (
     taxon_id           int           not null,
@@ -67,5 +65,3 @@ create table Pathway_definition (
     parent_id      char(6)       not null,
     primary key    (id)
 ) ENGINE = InnoDB;
-
--- select * from BioDB.Pathway_Def where id not regexp '^[ABC][0-9]{5}$'
