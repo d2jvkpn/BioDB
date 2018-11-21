@@ -121,11 +121,7 @@ func QueryTaxonName(db *sql.DB, taxon_name string) (inforlist []Taxon_infor,
 		inforlist = append(inforlist, t.Taxon_infor)
 	}
 
-	if err = rows.Err(); err != nil {
-		return
-	}
-
-	if len(inforlist) == 0 {
+	if err = rows.Err(); err == nil && len(inforlist) == 0 {
 		inforlist, err = QueryTaxonHomotypic(db, taxon_name)
 	}
 
@@ -161,9 +157,7 @@ func QueryTaxonHomotypic(db *sql.DB, taxon_name string) (
 		inforlist = append(inforlist, t.Taxon_infor)
 	}
 
-	err = rows.Err()
-
-	if err == nil && len(inforlist) == 0 {
+	if err = rows.Err(); err == nil && len(inforlist) == 0 {
 		err = errors.New("sql: no rows in result set")
 	}
 
@@ -190,9 +184,7 @@ func QueryGO(db *sql.DB, taxon_id string) (result [][]string, err error) {
 		result = append(result, []string{t.Genes, t.GO_id})
 	}
 
-	err = rows.Err()
-
-	if err == nil && len(result) < 2 {
+	if err = rows.Err(); err == nil && len(result) == 1 {
 		err = errors.New("sql: no rows in result set")
 	}
 
@@ -227,9 +219,7 @@ func QueryPathway(db *sql.DB, taxon_id string) (result [][]string, err error) {
 			t.Gene_information, t.KO_id, t.KO_information, t.EC_ids})
 	}
 
-	err = rows.Err()
-
-	if err == nil && len(result) < 2 {
+	if err = rows.Err(); err == nil && len(result) == 1 {
 		err = errors.New("sql: no rows in result set")
 	}
 
