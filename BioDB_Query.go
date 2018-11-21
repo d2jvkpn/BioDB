@@ -84,7 +84,7 @@ func QueryTaxonName(db *sql.DB, taxon_name string) (err error) {
 	var rows *sql.Rows
 
 	query := fmt.Sprintf("select * from Taxonomy where escape_name = '%s';",
-		cmdplus.NameEscape(taxon_name))
+		cmdplus.NameEscape(taxon_name, true))
 
 	if rows, err = db.Query(query); err != nil {
 		return
@@ -132,7 +132,7 @@ func QueryTaxonHomotypic(db *sql.DB, taxon_name string) (
 	var rows *sql.Rows
 
 	query := fmt.Sprintf("select * from Taxonomy_homotypic where name = '%s';",
-		cmdplus.NameEscape(taxon_name))
+		cmdplus.NameEscape(taxon_name, true))
 
 	if rows, err = db.Query(query); err != nil {
 		return
