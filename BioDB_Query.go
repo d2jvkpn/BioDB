@@ -3,12 +3,14 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/d2jvkpn/gopkgs/cmdplus"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os"
 	"regexp"
+	"strings"
 )
 
 const USAGE = `Query BioDB, usage:
@@ -19,8 +21,8 @@ const USAGE = `Query BioDB, usage:
     "Pathway"    <taxon_id>
 
 author: d2jvkpn
-version: 0.0.4
-release: 2018-11-20
+version: 0.0.5
+release: 2018-11-21
 project: https://github.com/d2jvkpn/BioDB
 lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 `
@@ -53,11 +55,24 @@ func main() {
 			fmt.Println(string(jsbytes))
 		}
 	case !isdigital && table == "Taxonomy":
-		err = QueryTaxonName(db, taxon)
+		var inforlist []Taxon_infor
+
+		if inforlist, err = QueryTaxonName(db, taxon); err == nil {
+			jsbytes, _ := json.MarshalIndent(inforlist, "", "  ")
+			fmt.Println(string(jsbytes))
+		}
 	case isdigital && table == "GO":
-		err = QueryGO(db, taxon)
+		var result [][]string
+
+		if result, err = QueryGO(db, taxon); err == nil {
+			Print2dSlice(result)
+		}
 	case isdigital && table == "Pathway":
-		err = QueryPathway(db, taxon)
+		var result [][]string
+
+		if result, err = QueryPathway(db, taxon); err == nil {
+			Print2dSlice(result)
+		}
 	default:
 		fmt.Println(USAGE)
 		os.Exit(2)
@@ -80,7 +95,9 @@ func QueryTaxonID(db *sql.DB, taxon_id string) (t *Taxonomy, err error) {
 	return
 }
 
-func QueryTaxonName(db *sql.DB, taxon_name string) (err error) {
+func QueryTaxonName(db *sql.DB, taxon_name string) (inforlist []Taxon_infor,
+	err error) {
+
 	var rows *sql.Rows
 
 	query := fmt.Sprintf("select * from Taxonomy where escape_name = '%s';",
@@ -92,7 +109,6 @@ func QueryTaxonName(db *sql.DB, taxon_name string) (err error) {
 	defer rows.Close()
 
 	var t Taxonomy
-	var inforlist []Taxon_infor
 
 	for rows.Next() {
 		err = rows.Scan(&t.Taxon_id, &t.Scientific_name, &t.Taxon_rank,
@@ -110,13 +126,8 @@ func QueryTaxonName(db *sql.DB, taxon_name string) (err error) {
 	}
 
 	if len(inforlist) == 0 {
-		if inforlist, err = QueryTaxonHomotypic(db, taxon_name); err != nil {
-			return
-		}
+		inforlist, err = QueryTaxonHomotypic(db, taxon_name)
 	}
-
-	jsbytes, _ := json.MarshalIndent(inforlist, "", "  ")
-	fmt.Println(string(jsbytes))
 
 	return
 }
@@ -151,10 +162,15 @@ func QueryTaxonHomotypic(db *sql.DB, taxon_name string) (
 	}
 
 	err = rows.Err()
+
+	if err == nil && len(inforlist) == 0 {
+		err = errors.New("sql: no rows in result set")
+	}
+
 	return
 }
 
-func QueryGO(db *sql.DB, taxon_id string) (err error) {
+func QueryGO(db *sql.DB, taxon_id string) (result [][]string, err error) {
 	var rows *sql.Rows
 	query := fmt.Sprintf("select * from GO where taxon_id = '%s';", taxon_id)
 
@@ -164,20 +180,26 @@ func QueryGO(db *sql.DB, taxon_id string) (err error) {
 	defer rows.Close()
 
 	var t GO
-	fmt.Println("genes\tGO_id")
+
+	result = append(result, []string{"genes", "GO_id"})
 
 	for rows.Next() {
 		if err = rows.Scan(&t.Taxon_id, &t.Genes, &t.GO_id); err != nil {
 			return
 		}
-		fmt.Printf("%s\t%s\n", t.Genes, t.GO_id)
+		result = append(result, []string{t.Genes, t.GO_id})
 	}
 
 	err = rows.Err()
+
+	if err == nil && len(result) < 2 {
+		err = errors.New("sql: no rows in result set")
+	}
+
 	return
 }
 
-func QueryPathway(db *sql.DB, taxon_id string) (err error) {
+func QueryPathway(db *sql.DB, taxon_id string) (result [][]string, err error) {
 	var rows *sql.Rows
 
 	query := fmt.Sprintf("select * from Pathway where taxon_id = '%s';",
@@ -189,22 +211,35 @@ func QueryPathway(db *sql.DB, taxon_id string) (err error) {
 	defer rows.Close()
 
 	var t Pathway
-	fmt.Println("pathway_id\tgene_id\tKO_id\tKO_information\tEC_ids")
+
+	result = append(result, []string{"pathway_id", "gene_id",
+		"gene_information", "KO_id", "KO_information", "EC_ids"})
 
 	for rows.Next() {
-		err = rows.Scan(&t.Taxon_id, &t.Pathway_id, &t.Gene_id, &t.KO_id,
-			&t.KO_information, &t.EC_ids)
+		err = rows.Scan(&t.Taxon_id, &t.Pathway_id, &t.Gene_id,
+			&t.Gene_information, &t.KO_id, &t.KO_information, &t.EC_ids)
 
 		if err != nil {
 			return
 		}
 
-		fmt.Printf("%s\t%s\t%s\t%s\t%s\n", t.Pathway_id, t.Gene_id, t.KO_id,
-			t.KO_information, t.EC_ids)
+		result = append(result, []string{t.Pathway_id, t.Gene_id,
+			t.Gene_information, t.KO_id, t.KO_information, t.EC_ids})
 	}
 
 	err = rows.Err()
+
+	if err == nil && len(result) < 2 {
+		err = errors.New("sql: no rows in result set")
+	}
+
 	return
+}
+
+func Print2dSlice(result [][]string) {
+	for i, _ := range result {
+		fmt.Println(strings.Join(result[i], "\t"))
+	}
 }
 
 type Taxon_infor struct {
@@ -222,6 +257,6 @@ type GO struct {
 }
 
 type Pathway struct {
-	Taxon_id, Pathway_id, Gene_id string
-	KO_id, KO_information, EC_ids string
+	Taxon_id, Pathway_id, Gene_id, Gene_information string
+	KO_id, KO_information, EC_ids                   string
 }
