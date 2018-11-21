@@ -12,11 +12,12 @@ alter table BioDB.Taxonomy_homotypic add index taxon_id (taxon_id);
 alter table BioDB.Taxonomy_homotypic add index name (name);
 
 ----
-load data local infile 'GO.tsv' into table BioDB.GO ignore 1 lines
-(taxon_id, genes, GO_id);
--- 349,174,064 records
+--load data local infile 'GO.tsv' into table BioDB.GO ignore 1 lines
+-- (taxon_id, genes, GO_id);
 
-alter table BioDB.GO add index taxon_id (taxon_id);
+-- alter table BioDB.GO add index taxon_id (taxon_id);
+
+-- sh load_GO_seperatly.sh
 
 ----
 load data local infile 'Pathway.tsv' into table BioDB.Pathway ignore 1 lines;
@@ -25,6 +26,7 @@ load data local infile 'Pathway.tsv' into table BioDB.Pathway ignore 1 lines;
 
 alter table BioDB.Pathway add index taxon_id (taxon_id);
 alter table BioDB.Pathway add index pathway_id (pathway_id);
+
 
 load data local infile 'Pathway_Definition.tsv' into table 
 BioDB.Pathway_definition ignore 1 lines;
