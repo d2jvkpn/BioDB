@@ -49,6 +49,7 @@ create table Pathway (
     taxon_id           int           not null,
     pathway_id         varchar(32)   not null,
     gene_id            varchar(64)   not null,
+	gene_information   varchar(1024),
     KO_id              char(6)       not null,
     KO_information     varchar(256),
     EC_ids             varchar(128),
