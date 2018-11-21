@@ -24,10 +24,13 @@ sed '1d' orgcode2taxon_id.tsv | while read c t; do
     keg=Pathway_keg/${c}00001.keg.gz
     test -f $keg || { echo "$keg not available" 1>&2; continue; }
 
-	./Pathway tsv $keg | awk -v t=$t 'BEGIN{FS=OFS="\t"}
-    $1~"^PATH:"{sub("PATH:", "", $1); print t,$1,$2,$4,$5,$6}'
+	Pathway tsv $keg | awk -v t=$t 'BEGIN{FS=OFS="\t"}
+    $1~"^PATH:"{sub("PATH:", "", $1); print t,$1,$2,$3,$4,$5,$6}'
 done | awk 'BEGIN{FS=OFS="\t"; print "taxon_id", "pathway_id", "gene_id",
-"KO_id", "KO_information", "EC_ids"} {print}' > Pathway.tsv
+"gene_information","KO_id", "KO_information", "EC_ids"} {print}' > Pathway.tsv
+
+# awk -F "\t" '{if(a<length($4)) a=length($4)} END{print a}' Pathway.tsv
+# 878
 
 sed '1d' orgcode2taxon_id.tsv | while read c t; do
     keg=Pathway_keg/${c}00001.keg.gz
