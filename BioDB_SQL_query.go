@@ -14,14 +14,14 @@ import (
 )
 
 const USAGE = `Query BioDB, usage:
-  $ BioDB_Query  <table_name>  <taxon>
+  $ BioDB_SQL_query  <table_name>  <taxon>
     arguments:
     "Taxonomy"   <taxon_id | taxon_name>
     "GO"         <taxon_id>
     "Pathway"    <taxon_id>
 
 author: d2jvkpn
-version: 0.0.5
+version: 0.5
 release: 2018-11-21
 project: https://github.com/d2jvkpn/BioDB
 lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
