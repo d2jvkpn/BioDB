@@ -32,14 +32,14 @@ Ensembl_genome_Vertebrate.tsv > Ensembl_genome.tsv
 
   {
     awk 'BEGIN{FS=OFS="\t"}NR==1 {for(i=4; i<= NF; i++) a[i]=$i}
-    NR>1{line=$1"\t"$2"\t"$3; infor="\t"
-    for(i=4; i<=NF; i++) {if ($i!="") infor=infor"; "a[i]" \""$i"\""};
-    print line""infor}' NCBI_genome.tsv
+    NR>1{line=$1"\t"$2"\t"$3"\t";
+    for(i=4; i<=NF; i++) {if ($i!="") line=line"; "a[i]" \""$i"\""};
+    sub("\t; ", "\t", line); print line}' NCBI_genome.tsv
 
     awk 'BEGIN{FS=OFS="\t"}NR==1 {for(i=4; i<= NF; i++) a[i]=$i}
-    NR>1{line=$1"\t"$2"\t"$3; infor="\t";
-    for(i=4; i<=NF; i++) {if ($i!="") infor=infor"; "a[i]" \""$i"\""};
-    print line""infor}' Ensembl_genome.tsv
+    NR>1{line=$1"\t"$2"\t"$3"\t";
+    for(i=4; i<=NF; i++) {if ($i!="") line=line"; "a[i]" \""$i"\""};
+    sub("\t; ", "\t", line); print line}' Ensembl_genome.tsv
   } | sort -k1,1n
 } > Genome.tsv
 
