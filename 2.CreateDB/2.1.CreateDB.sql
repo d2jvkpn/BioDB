@@ -14,11 +14,9 @@ insert into mysql.user (User, Password, Host)
 grant all privileges on BioDB.* to 'hello'@'localhost';
 flush privileges;
 
----- mysql -u hello BioDB;
+---- mysql -u hello;
 
-use BioDB;
-
-create table Taxonomy (
+create table BioDB.Taxonomy (
     taxon_id         int           not null,
     scientific_name  varchar(255)  not null,
     taxon_rank       varchar(255)  not null,
@@ -28,13 +26,13 @@ create table Taxonomy (
 ) ENGINE = InnoDB;
 
 
-create table Taxonomy_homotypic (
+create table BioDB.Taxonomy_homotypic (
     taxon_id   int           not null,
     name       varchar(256)  not null
 );
 
 ----
-create table GO (
+create table BioDB.GO (
     taxon_id     int            not null,
     genes        varchar(1024)  not null,
     GO_id        nchar(10)      not null,
@@ -45,7 +43,7 @@ create table GO (
 ) ENGINE = InnoDB;
 
 
-create table Pathway (
+create table BioDB.Pathway (
     taxon_id           int           not null,
     pathway_id         varchar(32)   not null,
     gene_id            varchar(64)   not null,
@@ -60,7 +58,7 @@ create table Pathway (
 ) ENGINE = InnoDB;
 
 
-create table Pathway_definition (
+create table BioDB.Pathway_definition (
     id             char(6)       not null,
     name           varchar(255)  not null,
     parent_id      char(6)       not null,
@@ -68,7 +66,7 @@ create table Pathway_definition (
 ) ENGINE = InnoDB;
 
 
-create table Genome (
+create table BioDB.Genome (
     taxon_id           int           not null,
     organism_name      varchar(256)  not null,
     URL                varchar(256)  not null,
