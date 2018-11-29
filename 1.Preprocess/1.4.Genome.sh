@@ -43,7 +43,7 @@ Ensembl_genome_Vertebrate.tsv > Ensembl_genome.tsv
 } | sort -k1,1n
 } > Genome.tsv
 
-./TSV_fileds_maxlen Genome.tsv
+go run TSV_fileds_maxlen.go Genome.tsv
 
 rm Ensembl_genome_notVertebrate.tsv Ensembl_genome_Vertebrate.tsv
 
