@@ -138,6 +138,7 @@ func Query(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Status", "not found")
 		w.Write([]byte(fmt.Sprintf("%s", err)))
+		// w.Write([]byte("Sorry, a database error occured"))
 	}
 }
 
@@ -159,7 +160,6 @@ var SearchHtml = `
   <form action="query" method="post" align="center">
 
     <p style="text-indent: 2em" align="center">
-
       <select id="table" name="table">
         <option value="Taxonomy"> Taxonomy </option>
         <option value="Genome"> Genome </option>
