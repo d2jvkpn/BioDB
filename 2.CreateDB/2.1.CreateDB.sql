@@ -1,6 +1,6 @@
 -- author: d2jvkpn
--- version: 0.2
--- release: 2018-11-12
+-- version: 0.3
+-- release: 2018-11-30
 -- project: https://github.com/d2jvkpn/BioDB
 -- license: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 
@@ -65,4 +65,16 @@ create table Pathway_definition (
     name           varchar(255)  not null,
     parent_id      char(6)       not null,
     primary key    (id)
+) ENGINE = InnoDB;
+
+
+create table Genome (
+    taxon_id           int           not null,
+    organism_name      varchar(256)  not null,
+    URL                varchar(256)  not null,
+    information        varchar(512),
+	constraint Genome_taxon_id
+        foreign key (taxon_id) references Taxonomy (taxon_id)
+        on delete cascade
+        on update restrict
 ) ENGINE = InnoDB;
