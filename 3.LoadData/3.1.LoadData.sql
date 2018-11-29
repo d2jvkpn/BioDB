@@ -1,3 +1,4 @@
+----
 load data local infile 'data_Taxonomy/Taxonomy.tsv' into table BioDB.Taxonomy 
 ignore 1 lines (taxon_id, scientific_name, taxon_rank, parent_id, escape_name);
 -- Query OK, 2003451 rows affected (15.47 sec)          
@@ -11,8 +12,6 @@ table BioDB.Taxonomy_homotypic ignore 1 lines (taxon_id, name);
 alter table BioDB.Taxonomy_homotypic add index taxon_id (taxon_id);
 alter table BioDB.Taxonomy_homotypic add index name (name);
 
--- sh load_GO_seperatly.sh
-
 ----
 load data local infile 'data_Pathway/Pathway.tsv' into table BioDB.Pathway 
 ignore 1 lines;
@@ -22,14 +21,14 @@ ignore 1 lines;
 alter table BioDB.Pathway add index taxon_id (taxon_id);
 alter table BioDB.Pathway add index pathway_id (pathway_id);
 
-
+----
 load data local infile 'data_Pathway/Pathway_Definition.tsv' into table 
 BioDB.Pathway_definition ignore 1 lines;
 
 alter table BioDB.Pathway_definition add index id (id);
 alter table BioDB.Pathway_definition add index name (name);
 
-
+----
 load data local infile 'data_Genome/Genome.tsv' into table BioDB.Genome 
 ignore 1 lines;
 -- Query OK, 231504 rows affected, 221 warnings (32.45 sec)
