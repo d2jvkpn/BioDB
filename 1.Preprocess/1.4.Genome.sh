@@ -30,17 +30,17 @@ Ensembl_genome_Vertebrate.tsv > Ensembl_genome.tsv
   awk 'BEGIN{FS=OFS="\t"; 
   print "taxon_id", "organism_name", "URL", "information"}'
 
-{
-  awk 'BEGIN{FS=OFS="\t"}NR==1 {for(i=4; i<= NF; i++) a[i]=$i}
-  NR>1{line=$1"\t"$2"\t"$3"\t"a[5]" \""$5"\"";
-  for(i=5; i<=NF; i++) {if ($i!="") line=line"; "a[i]" \""$i"\""};
-  print line}' NCBI_genome.tsv
+  {
+    awk 'BEGIN{FS=OFS="\t"}NR==1 {for(i=4; i<= NF; i++) a[i]=$i}
+    NR>1{line=$1"\t"$2"\t"$3; infor="\t"
+    for(i=4; i<=NF; i++) {if ($i!="") infor=infor"; "a[i]" \""$i"\""};
+    print line""infor}' NCBI_genome.tsv
 
-  awk 'BEGIN{FS=OFS="\t"}NR==1 {for(i=4; i<= NF; i++) a[i]=$i}
-  NR>1{line=$1"\t"$2"\t"$3"\t"a[5]" \""$5"\"";
-  for(i=5; i<=NF; i++) {if ($i!="") line=line"; "a[i]" \""$i"\""};
-  print line}' Ensembl_genome.tsv
-} | sort -k1,1n
+    awk 'BEGIN{FS=OFS="\t"}NR==1 {for(i=4; i<= NF; i++) a[i]=$i}
+    NR>1{line=$1"\t"$2"\t"$3; infor="\t";
+    for(i=4; i<=NF; i++) {if ($i!="") infor=infor"; "a[i]" \""$i"\""};
+    print line""infor}' Ensembl_genome.tsv
+  } | sort -k1,1n
 } > Genome.tsv
 
 go run TSV_fileds_maxlen.go Genome.tsv
