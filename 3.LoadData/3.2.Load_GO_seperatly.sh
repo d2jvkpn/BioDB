@@ -3,14 +3,15 @@
 set -eu -o pipefail
 
 date
-pigz -dc GO.tsv.gz | sed '1d' | split -l 50000000 --additional-suffix=.GO.tsv
+pigz -dc data_GO/GO.tsv.gz | sed '1d' |
+split -l 50000000 --additional-suffix=.GO.tsv
 # xaa.GO.tsv xab.GO.tsv...
 
 date
 
 {
   for i in x*.GO.tsv; do
-    echo "select \"LOADING $i...\";"
+    echo "select concat ('Loading $i, ', now());"
     echo "load data local infile '$i' into table BioDB.GO (taxon_id, genes, GO_id);"
     echo "show warnings;"
     echo
