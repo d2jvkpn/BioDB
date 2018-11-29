@@ -1,23 +1,24 @@
 #! /bin/bash
 
 ## Taxonomy, 2018-11-07, 2003451 records
+mkdir -p data_Taxonomy; cd data_Taxonomy
+
 wget -c https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
 wget -O new_taxdump_readme.txt \
 https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/taxdump_readme.txt
 
-mkdir tmp
-tar -xf new_taxdump.tar.gz names.dmp nodes.dmp
-mv names.dmp nodes.dmp tmp
+tar -xf new_taxdump.tar.gz
 
-sed 's/\t|\t/\t/g; s/|$//' tmp/names.dmp | awk 'BEGIN{FS=OFS="\t";
-print "taxon_id", "name"} $4=="synonym"{print $1, $2}' > Homotypic_synonym.0.tsv
+sed 's/\t|\t/\t/g; s/|$//' names.dmp |
+awk 'BEGIN{FS=OFS="\t"; print "taxon_id", "name"} 
+$4=="synonym"{print $1, $2}' > Homotypic_synonym.0.tsv
 
 python3 homotypic_synonym_urlquote.py
 
-sed 's/\t|\t/\t/g; s/|$//' tmp/names.dmp |
+sed 's/\t|\t/\t/g; s/|$//' names.dmp |
 awk 'BEGIN{FS=OFS="\t"} $4=="scientific name"{print $1, $2}' > id2name.txt
 
-sed 's/\t|\t/\t/g; s/|$//' tmp/nodes.dmp |
+sed 's/\t|\t/\t/g; s/|$//' nodes.dmp |
 awk 'BEGIN{FS=OFS="\t"} {print $1,$3,$2}' > id_rank_parent.txt
 
 paste id2name.txt id_rank_parent.txt |
@@ -38,4 +39,6 @@ print "taxon_id", "scientific_name", "taxon_rank", "parent_id"}
 
 go run scientific_name_QueryEscape.go
 
-rm -r id2name.txt id_rank_parent.txt Taxonomy.0.tsv tmp
+rm -r id2name.txt id_rank_parent.txt Taxonomy.0.tsv
+
+cd -
