@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset = "utf-8">
+  <title>BioDB web service</title>
+  <link rel="stylesheet" type="text/css" href="static/css/my.css">
+</head>
+
+<body>
+
+  <br></br>
+  <h2 align="center">BioDB web service</h2>
+
+  <form action="query" method="post" align="center">
+
+    <p style="text-indent: 2em" align="center">
+      <select id="table" name="table">
+        <option value="Taxonomy"> Taxonomy </option>
+        <option value="Genome"> Genome </option>
+        <option value="GO"> GO </option>
+        <option value="Pathway"> Pathway </option>
+      </select>
+
+      <input type="search" value="" name="taxon">
+
+      <input type="submit" value="Submit" style="background-color: #4CAF50; 
+        border: 2px solid #e7e7e7; color: white; width:70px; height:27px">
+    </p>
+
+  </form>
+
+  <div align="center" size=1.5>
+    <i>
+      <font size="2" color="grey">
+	    Please enter a taxonomy id, a scientific name is only for "Taxonomy"
+      </font>
+    </i>
+  </div>
+  <!--HR align=center color=#987cb9 SIZE=1.5-->
+</body>
+
+</html>
