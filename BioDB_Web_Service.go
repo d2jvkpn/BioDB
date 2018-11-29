@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"io/ioutil"
 	"strings"
 )
 
@@ -18,8 +19,7 @@ const USAGE = `BioDB web service, usage:
   $ BioDB_Web_Service  [-p port]
 `
 
-const LISENSE = `
-author: d2jvkpn
+const LISENSE = `author: d2jvkpn
 version: 0.2
 release: 2018-11-30
 project: https://github.com/d2jvkpn/BioDB
@@ -27,6 +27,7 @@ lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 `
 
 var db *sql.DB
+var searchbts []byte
 
 func main() {
 	var err error
@@ -57,16 +58,20 @@ func main() {
 	}
 	defer db.Close()
 
+	if searchbts, err = ioutil.ReadFile("html/search.html"); err != nil {
+		log.Fatal(err)
+	}
+
 	http.HandleFunc("/", Search)
 	http.HandleFunc("/query", Query)
-	err = http.ListenAndServe(port, nil)
-	if err != nil {
+
+	if err = http.ListenAndServe(port, nil); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func Search(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(SearchHtml))
+	w.Write(searchbts)
 }
 
 func Query(w http.ResponseWriter, r *http.Request) {
@@ -141,48 +146,3 @@ func Query(w http.ResponseWriter, r *http.Request) {
 		// w.Write([]byte("Sorry, a database error occured"))
 	}
 }
-
-var SearchHtml = `
-<!doctype html>
-<html>
-
-<head>
-  <meta charset = "utf-8">
-  <title>BioDB web service</title>
-  <link rel="stylesheet" type="text/css" href="static/css/my.css">
-</head>
-
-<body>
-
-  <br></br>
-  <h2 align="center">BioDB web service</h2>
-
-  <form action="query" method="post" align="center">
-
-    <p style="text-indent: 2em" align="center">
-      <select id="table" name="table">
-        <option value="Taxonomy"> Taxonomy </option>
-        <option value="Genome"> Genome </option>
-        <option value="GO"> GO </option>
-        <option value="Pathway"> Pathway </option>
-      </select>
-
-      <input type="search" value="" name="taxon">
-
-      <input type="submit" value="Submit" style="background-color: #4CAF50; 
-        border: 2px solid #e7e7e7; color: white; width:70px; height:27px">
-    </p>
-
-  </form>
-
-  <div align="center" size=1.5>
-    <i>
-      <font size="2" color="grey">
-	    Please enter a taxonomy id, a scientific name is only for "Taxonomy"
-      </font>
-    </i>
-  </div>
-  <!--HR align=center color=#987cb9 SIZE=1.5-->
-</body>
-
-</html>`
