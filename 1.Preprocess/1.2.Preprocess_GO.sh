@@ -2,6 +2,8 @@
 
 set -eu -o pipefail
 
+mkdir -p data_GO; cd data_GO
+
 #### Gene Ontology
 wget -c ftp://ftp.ebi.ac.uk/pub/databases/GO/goa/UNIPROT/goa_uniprot_all.gaf.gz
 
@@ -18,3 +20,5 @@ rm GO0.tsv
 pigz -dc GO.tsv.gz | awk 'BEGIN{a=0} 
 NR>1{if(length($2)>a) a=length($2)} END{print a, NR}'
 # 538 350040327
+
+cd -
