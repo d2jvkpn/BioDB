@@ -1,4 +1,6 @@
-oraganism's gene function database, contains following data resources:
+**A biologial database constitutes following data resources:**
 1. NCBI taxonomy;
-2. Gene ontology;
-3. KEGG pathway;
+2. NCBI genome;
+3. Ensembl genome;
+4. Gene ontology;
+5. KEGG pathway;
