@@ -9,20 +9,19 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"regexp"
 	"strings"
 )
 
 const USAGE = `BioDB web service, usage:
-  $ BioDB_web_service  [-p port]
+  $ BioDB_Web_Service  [-p port]
 `
 
 const LISENSE = `
 author: d2jvkpn
-version: 0.1
-release: 2018-11-26
+version: 0.2
+release: 2018-11-30
 project: https://github.com/d2jvkpn/BioDB
 lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 `
@@ -32,6 +31,7 @@ var db *sql.DB
 func main() {
 	var err error
 	var port string
+	var ok bool
 
 	flag.StringVar(&port, "p", ":8000", "set port")
 
@@ -44,18 +44,17 @@ func main() {
 
 	flag.Parse()
 
-	if match, _ := regexp.MatchString("^[1-9][0-9]*$", port); match {
+	if ok, _ = regexp.MatchString("^[1-9][0-9]*$", port); ok {
 		port = ":" + port
 	}
 
-	if match, _ := regexp.MatchString("^:[1-9][0-9]*$", port); !match {
+	if ok, _ = regexp.MatchString("^:[1-9][0-9]*$", port); !ok {
 		log.Fatalf("invalid port \"%s\"\n", port)
 	}
 
 	if db, err = sql.Open("mysql", "hello:@/BioDB"); err != nil {
 		log.Fatal(err)
 	}
-
 	defer db.Close()
 
 	http.HandleFunc("/", Search)
@@ -106,20 +105,12 @@ func Query(w http.ResponseWriter, r *http.Request) {
 			jsbytes, _ := json.MarshalIndent(inforlist, "", "  ")
 			w.Write(jsbytes)
 		}
-	case strings.EqualFold(table, "Genomic"):
-		var gn biodb.Genomic
-		var input string
-		var prefix string = "https://www.ncbi.nlm.nih.gov/genome"
+	case isdigital && strings.EqualFold(table, "Genome"):
+		var result []*biodb.Genome
 
-		if yes, _ := regexp.MatchString("^[1-9][0-9]*$", taxon); yes {
-			input = fmt.Sprintf(prefix+"/?term=txid%s[orgn]", taxon)
-		} else {
-			taxon = strings.Join(strings.Fields(taxon), " ")
-			input = prefix + "/?term=" + url.QueryEscape(taxon)
-		}
+		if result, err = biodb.QueryGenome(db, taxon); err == nil {
 
-		if err = gn.Query(input); err == nil {
-			jsbytes, _ := json.MarshalIndent(gn, "", " ")
+			jsbytes, _ := json.MarshalIndent(result, "", "  ")
 			w.Write(jsbytes)
 		}
 	case isdigital && strings.EqualFold(table, "GO"):
@@ -169,11 +160,11 @@ var SearchHtml = `
 
     <p style="text-indent: 2em" align="center">
 
-      <select id="dbtable" name="table">
-        <option value="Taxonomy">Taxonomy</option>
-        <option value="Genomic">Genomic</option>
-        <option value="GO">GO</option>
-        <option value="Pathway">Pathway</option>
+      <select id="table" name="table">
+        <option value="Taxonomy"> Taxonomy </option>
+        <option value="Genome"> Genome </option>
+        <option value="GO"> GO </option>
+        <option value="Pathway"> Pathway </option>
       </select>
 
       <input type="search" value="" name="taxon">
@@ -187,8 +178,7 @@ var SearchHtml = `
   <div align="center" size=1.5>
     <i>
       <font size="2" color="grey">
-	    Please enter a taxonomy id, a scientific name is only 
-        for "Taxonomy" and "Genominc"
+	    Please enter a taxonomy id, a scientific name is only for "Taxonomy"
       </font>
     </i>
   </div>
