@@ -20,7 +20,6 @@ a[$2]{print $1,a[$2]}' name2taxon_id.tsv - > orgcode2taxon_id.tsv
 
 rm name2taxon_id.tsv
 
-## https://github.com/d2jvkpn/BioinformaticsAnalysis/blob/master/Pathway/Download_All_Pathway.sh
 mkdir Pathway_keg
 tar -xf Pathway_keg.tar -C Pathway_keg
 
@@ -48,5 +47,6 @@ awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$5} ++x[$3]==1{print $3,$4,""}
 ++x[$5]==1{print $5,$6,$3}' Pathway_Definition.0.tsv |
 sort | sed '1i id\tname\tparent_id' > Pathway_Definition.tsv
 
-rm -r Pathway_Definition.0.tsv Pathway_keg
+rm Pathway_Definition.0.tsv
+
 cd -
