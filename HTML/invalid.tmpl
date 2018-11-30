@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset = "utf-8">
+  <title>BioDB Web Service</title>
+  <link rel="stylesheet" type="text/css" href="static/css/my.css">
+</head>
+
+<body>
+
+  <br></br>
+  <div align="center">
+	<p>A invalid query (<i>{{.Taxon}}</i> for <i>{{.Table}}</i>),</p>
+    <p>please provide a taxonomy id or select a correct table name.</p>
+  <div>
+
+  <p align="center">
+    <button onclick="goBack()"> Go back </button>
+  </p>
+
+  <script>
+    function goBack() {
+      window.history.back();
+    }
+
+</script>
+</body>
+
+</html>
