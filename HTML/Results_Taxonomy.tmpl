@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset = "utf-8">
+  <meta http-equiv = "Content-Type"  content="text/html; charset=utf-8">
+
+  <title>BioDB Taxonomy Results</title>
+</head>
+
+<body>
+  <br></br>
+  
+  <div align="center">
+    <p>
+      <i> <b>Taxonomy</b></i> results of <i><b>{{.Taxon}}</b> </i>
+    </p>
+  <div>
+
+  <br></br>
+  <table style="text-align: left" border="1" cellpadding="4" width="800px">
+    <tr >
+      <th>Taxon id</th>
+      <th>Scientific name</th>
+      <th>Taxon rank</th>
+      <th>Parent id</th>
+    <tr>
+
+    {{range .Taxonlist}}
+      <tr>
+        <td>{{.Taxon_id}}</td>
+        <td>{{.Scientific_name}}</td>
+        <td>{{.Taxon_rank}}</td>
+        <td>
+          <a href="/query?table=Taxonomy&taxon={{.Parent_id}}">
+            {{.Parent_id}}
+          </a>
+        </td>
+      </tr>
+    {{end}}
+  </table>
+
+</body>
+
+</html>
