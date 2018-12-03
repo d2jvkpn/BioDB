@@ -4,7 +4,10 @@ set -eu -o pipefail
 
 # https://ftp.ncbi.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/latest_assembly_versions/GCF_000001405.38_GRCh38.p12/
 
-wget -c -O NCBI_assembly_summary_refseq.txt https://ftp.ncbi.nih.gov/genomes/refseq/assembly_summary_refseq.txt
+mkdir -p data_Genome; cd data_Genome
+
+wget -c -O NCBI_assembly_summary_refseq.txt \
+https://ftp.ncbi.nih.gov/genomes/refseq/assembly_summary_refseq.txt
 
 awk 'BEGIN{FS=OFS="\t"} { if($5=="na") $5="";
 infor=$8"\t"$20"\t"$5"\t"$9"\t"$12"\t"$15"\t"$16}
@@ -19,12 +22,11 @@ s=tolower(s); $2="http://"s".ensembl.org/"$2;
 print $4,$1,$2,$5,$6,$3}' Ensembl_species_list.txt > Ensembl_genome_notVertebrate.tsv
 
 ## ftp://ftp.ensembl.org/pub/release-94/
-## http://asia.ensembl.org/info/about/species.html
-python3 EnsemblVertebrate.py
+## manual export http://asia.ensembl.org/info/about/species.html
+python3 ../1.Preprocess/EnsemblVertebrate.py
 
 awk 'BEGIN{FS=OFS="\t"} NR==1 || FNR>1{print}' Ensembl_genome_notVertebrate.tsv \
 Ensembl_genome_Vertebrate.tsv > Ensembl_genome.tsv
-
 
 {
   awk 'BEGIN{FS=OFS="\t"; 
@@ -43,7 +45,7 @@ Ensembl_genome_Vertebrate.tsv > Ensembl_genome.tsv
   } | sort -k1,1n
 } > Genome.tsv
 
-go run TSV_fileds_maxlen.go Genome.tsv
+go run ../1.Preprocess/TSV_fileds_maxlen.go Genome.tsv
 
 rm Ensembl_genome_notVertebrate.tsv Ensembl_genome_Vertebrate.tsv
 
