@@ -33,8 +33,8 @@ Ensembl_genome_Vertebrate.tsv > Ensembl_genome.tsv
   print "taxon_id", "organism_name", "URL", "information"}'
 
   {
-    awk 'BEGIN{FS=OFS="\t"}NR==1 {for(i=4; i<= NF; i++) a[i]=$i}
-    NR>1{line=$1"\t"$2"\t"$3"\t";
+    awk 'BEGIN{FS=OFS="\t"} NR==1{for(i=4; i<= NF; i++) a[i]=$i}
+    NR>1{sub("ftp:", "https:", $3); line=$1"\t"$2"\t"$3"\t";
     for(i=4; i<=NF; i++) {if ($i!="") line=line"; "a[i]" \""$i"\""};
     sub("\t; ", "\t", line); print line}' NCBI_genome.tsv
 
