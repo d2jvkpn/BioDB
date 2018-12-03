@@ -13,7 +13,7 @@ sed 's/\t|\t/\t/g; s/|$//' names.dmp |
 awk 'BEGIN{FS=OFS="\t"; print "taxon_id", "name"} 
 $4=="synonym"{print $1, $2}' > Homotypic_synonym.0.tsv
 
-python3 homotypic_synonym_urlquote.py
+python3 ../1.Preprocess/homotypic_synonym_urlquote.py
 
 sed 's/\t|\t/\t/g; s/|$//' names.dmp |
 awk 'BEGIN{FS=OFS="\t"} $4=="scientific name"{print $1, $2}' > id2name.txt
@@ -37,7 +37,7 @@ print "taxon_id", "scientific_name", "taxon_rank", "parent_id"}
 
 ## Golang net/url.QueryEscape converts like
 
-go run scientific_name_QueryEscape.go
+go run ../1.Preprocess/scientific_name_QueryEscape.go
 
 rm -r id2name.txt id_rank_parent.txt Taxonomy.0.tsv
 
