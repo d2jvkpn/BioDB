@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset = "utf-8">
+  <meta http-equiv = "Content-Type"  content="text/html; charset=utf-8">
+
+  <title>BioDB Invalid Query</title>
+</head>
+
+<body>
+  <br></br>
+
+  <div align="center">
+	<p>An invalid query (query <i> <b>{{.Taxon}}</b> </i> in 
+      <i><b>{{.Table}}</b></i>),
+    </p>
+
+    <p>please provide a taxonomy id or select "Taxonomy".</p>
+  <div>
+
+  <p align="center">
+    <button onclick="goBack()"> Go back </button>
+  </p>
+
+  <script>
+    function goBack() {
+      window.history.back();
+    }
+  </script>
+
+</body>
+</html>
