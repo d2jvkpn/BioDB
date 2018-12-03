@@ -21,6 +21,7 @@ a[$2]{print $1,a[$2]}' name2taxon_id.tsv - > orgcode2taxon_id.tsv
 rm name2taxon_id.tsv
 
 mkdir Pathway_keg
+## https://github.com/d2jvkpn/BioinformaticsAnalysis/blob/master/Pathway/Download_All_Pathway.sh
 tar -xf Pathway_keg.tar -C Pathway_keg
 
 sed '1d' orgcode2taxon_id.tsv | while read c t; do
