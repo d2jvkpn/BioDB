@@ -23,7 +23,7 @@ const USAGE = `BioDB web service, usage:
 const LISENSE = `
 author: d2jvkpn
 version: 0.4
-release: 2018-12-03
+release: 2018-12-04
 project: https://github.com/d2jvkpn/BioDB
 lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 `
@@ -45,15 +45,6 @@ func main() {
 	var port string
 	var err error
 
-	DB, err = sql.Open("mysql",
-		fmt.Sprintf("%s:%s@%s/BioDB", DBuser, DBpasswd, DBhost))
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer DB.Close()
-
 	flag.StringVar(&port, "p", ":8000", "set port")
 
 	flag.Usage = func() {
@@ -64,8 +55,16 @@ func main() {
 	}
 
 	flag.Parse()
+	ValidPort(&port)
 
-	port = CheckPort(port)
+	DB, err = sql.Open("mysql",
+		fmt.Sprintf("%s:%s@%s/BioDB", DBuser, DBpasswd, DBhost))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer DB.Close()
 
 	http.HandleFunc("/", WriteSearch)
 	http.HandleFunc("/query", QueryTable)
@@ -117,18 +116,19 @@ func WriteSearch(w http.ResponseWriter, r *http.Request) {
 	w.Write(SearchBts)
 }
 
-func CheckPort(port string) string {
+func ValidPort(port *string) {
 	var ok bool
 
-	if ok, _ = regexp.MatchString("^[1-9][0-9]*$", port); ok {
-		return ":" + port
+	if ok, _ = regexp.MatchString("^[1-9][0-9]*$", *port); ok {
+		*port =  ":" + *port
+		return
 	}
 
-	if ok, _ = regexp.MatchString("^:[1-9][0-9]*$", port); !ok {
-		log.Fatalf("invalid port \"%s\"\n", port)
+	if ok, _ = regexp.MatchString("^:[1-9][0-9]*$", *port); !ok {
+		log.Fatalf("invalid port \"%s\"\n", *port)
 	}
 
-	return port
+	return
 }
 
 func QueryTable(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +136,7 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 
 	err = r.ParseForm()
 
-	QF := biodb.QueryForm{
+	QF := biodb.QueryForm {
 		r.FormValue("taxon"),
 		r.FormValue("table"),
 		r.FormValue("download")}
@@ -144,7 +144,7 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Add("StatusCode", strconv.Itoa(http.StatusBadRequest))
 		w.Header().Add("Status", http.StatusText(400))
-		InvalidQuery.Execute(w, QF)
+		InvalidQuery.Execute(w, &QF)
 		return
 	}
 
@@ -167,13 +167,14 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add("Content-Type", "application/json; charset=utf-8")
 			jsbytes, _ := json.MarshalIndent(tlist, "", "  ")
 			w.Write(jsbytes)
+
 		} else {
 			data := struct {
 				*biodb.QueryForm
 				Taxonlist []*biodb.Taxon_infor
 			}{&QF, tlist}
 
-			TnTmpl.Execute(w, data)
+			TnTmpl.Execute(w, &data)
 		}
 
 	case !isdigital && QF.Table == "Taxonomy":
@@ -189,13 +190,14 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add("Content-Type", "application/json; charset=utf-8")
 			jsbytes, _ := json.MarshalIndent(tlist, "", "  ")
 			w.Write(jsbytes)
+
 		} else {
 			data := struct {
 				*biodb.QueryForm
 				Taxonlist []*biodb.Taxon_infor
 			}{&QF, tlist}
 
-			TnTmpl.Execute(w, data)
+			TnTmpl.Execute(w, &data)
 		}
 
 	case isdigital && QF.Table == "Genome":
@@ -211,13 +213,14 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add("Content-Type", "application/json; charset=utf-8")
 			jsbytes, _ := json.MarshalIndent(glist, "", "  ")
 			w.Write(jsbytes)
+
 		} else {
 			data := struct {
 				*biodb.QueryForm
 				Genomelist []*biodb.Genome
 			}{&QF, glist}
 
-			GnTmpl.Execute(w, data)
+			GnTmpl.Execute(w, &data)
 		}
 
 	case isdigital && QF.Table == "GO":
@@ -227,12 +230,13 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 
-			dispo := "inline; filename=\"Gene_Ontology.%s.tsv.gz\""
+			dispo := "attachment; filename=\"Gene_Ontology.%s.tsv.gz\""
 			w.Header().Set("Content-Type", "application/x-gzip")
 			w.Header().Set("Content-Disposition", fmt.Sprintf(dispo, QF.Taxon))
 			w.Write(bts)
+
 		} else {
-			if err = biodb.MatchTaxonID(DB, QF.Table, QF.Taxon); err != nil {
+			if err = QF.MatchTaxonID(DB); err != nil {
 				break
 			}
 
@@ -247,13 +251,13 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 
-			dispo := "inline; filename=\"KEGG_Pathway.%s.tsv.gz\""
+			dispo := "attachment; filename=\"KEGG_Pathway.%s.tsv.gz\""
 			w.Header().Set("Content-Type", "application/x-gzip")
 			w.Header().Set("Content-Disposition", fmt.Sprintf(dispo, QF.Taxon))
-
 			w.Write(bts)
+
 		} else {
-			if err = biodb.MatchTaxonID(DB, QF.Table, QF.Taxon); err != nil {
+			if err = QF.MatchTaxonID(DB); err != nil {
 				break
 			}
 
@@ -263,7 +267,7 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 	default:
 		w.Header().Add("StatusCode", strconv.Itoa(http.StatusBadRequest))
 		w.Header().Add("Status", http.StatusText(400))
-		InvalidQuery.Execute(w, QF)
+		InvalidQuery.Execute(w, &QF)
 		return
 	}
 
@@ -273,14 +277,16 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 	} else if err == sql.ErrNoRows {
 		w.Header().Add("StatusCode", strconv.Itoa(http.StatusNotFound))
 		w.Header().Add("Status", http.StatusText(404))
-		NotFound.Execute(w, QF)
+		NotFound.Execute(w, &QF)
 
 	} else {
 		log.Printf("an error ocurred quering %s in %s: %s\n",
 			QF.Taxon, QF.Table, err)
 
-		w.Header().Add("StatusCode", strconv.Itoa(http.StatusInternalServerError))
+		w.Header().Add("StatusCode", 
+			strconv.Itoa(http.StatusInternalServerError))
+
 		w.Header().Add("Status", http.StatusText(500))
-		InternalError.Execute(w, QF)
+		InternalError.Execute(w, &QF)
 	}
 }
