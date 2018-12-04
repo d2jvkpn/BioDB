@@ -77,36 +77,36 @@ func main() {
 func init() {
 	var err error
 
-	if SearchBts, err = ioutil.ReadFile("HTML/Search.html"); err != nil {
+	if SearchBts, err = ioutil.ReadFile("html/Search.html"); err != nil {
 		log.Fatal(err)
 	}
 
-	InvalidQuery, err = template.ParseFiles("HTML/InvalidQuery.tmpl")
+	InvalidQuery, err = template.ParseFiles("html/InvalidQuery.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	NotFound, err = template.ParseFiles("HTML/NotFound.tmpl")
+	NotFound, err = template.ParseFiles("html/NotFound.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	InternalError, err = template.ParseFiles("HTML/InternalError.tmpl")
+	InternalError, err = template.ParseFiles("html/InternalError.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	DlTmpl, err = template.ParseFiles("HTML/Download.tmpl")
+	DlTmpl, err = template.ParseFiles("html/Download.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	GnTmpl, err = template.ParseFiles("HTML/Results_Genome.tmpl")
+	GnTmpl, err = template.ParseFiles("html/Results_Genome.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	TnTmpl, err = template.ParseFiles("HTML/Results_Taxonomy.tmpl")
+	TnTmpl, err = template.ParseFiles("html/Results_Taxonomy.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
