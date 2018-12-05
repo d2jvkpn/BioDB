@@ -7,6 +7,7 @@ import (
 	"github.com/d2jvkpn/gopkgs/biodb"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"strings"
 	"os"
 	"regexp"
 )
@@ -14,13 +15,14 @@ import (
 const USAGE = `Query BioDB, usage:
   $ BioDB_SQL_query  <table_name>  <taxon>
     arguments:
-    "Taxonomy"   <taxon_id | taxon_name>
-    "GO"         <taxon_id>
-    "Pathway"    <taxon_id>
+    "Taxonomy"   <taxon_id | taxon_name>,     exactly match
+    "Genome"     <taxon_id | organism name>,  exactly | ambigutily match
+    "GO"         <taxon_id>,                  exactly match
+    "Pathway"    <taxon_id>,                  exactly match
 
 author: d2jvkpn
-version: 0.6
-release: 2018-11-26
+version: 0.7
+release: 2018-12-05
 project: https://github.com/d2jvkpn/BioDB
 lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 `
@@ -32,45 +34,48 @@ func main() {
 	}
 
 	table, taxon := os.Args[1], os.Args[2]
+	taxon = strings.Join(strings.Fields(taxon), " ")
 	isdigital, _ := regexp.MatchString("^[1-9][0-9]*$", taxon)
 	var err error
-	var db *sql.DB
+	var DB *sql.DB
 
-	if db, err = sql.Open("mysql", "hello:@/BioDB"); err != nil {
+	if DB, err = sql.Open("mysql", "hello:@/BioDB"); err != nil {
 		log.Fatal(err)
 	}
 
-	defer db.Close()
+	defer DB.Close()
 
 	switch {
-	case isdigital && table == "Taxonomy":
-		var t *biodb.Taxonomy
+	case table == "Taxonomy":
+		var tlist []*biodb.Taxon_infor
 
-		if t, err = biodb.QueryTaxonID(db, taxon); err == nil {
-			jsbytes, _ := json.MarshalIndent(
-				[]biodb.Taxon_infor{t.Taxon_infor}, "", "  ")
-
-			fmt.Println(string(jsbytes))
+		if tlist, err = biodb.QueryTaxonomy(DB, taxon); err != nil {
+			break
 		}
-	case !isdigital && table == "Taxonomy":
-		var inforlist []biodb.Taxon_infor
 
-		if inforlist, err = biodb.QueryTaxonName(db, taxon); err == nil {
-			jsbytes, _ := json.MarshalIndent(inforlist, "", "  ")
-			fmt.Println(string(jsbytes))
+		jsbytes, _ := json.MarshalIndent(tlist, "", "  ")
+		fmt.Println(string(jsbytes))
+
+	case table == "Genome":
+		var glist []*biodb.Genome
+
+		if glist, err = biodb.QueryGenome(DB, taxon); err != nil {
+			break
 		}
+
+		jsbytes, _ := json.MarshalIndent(glist, "", "  ")
+		fmt.Println(string(jsbytes))
+
 	case isdigital && table == "GO":
-		var result [][]string
+		var wt biodb.Writer
+		wt = os.Stdout
+		err = biodb.QueryGO(DB, taxon, wt)
 
-		if result, err = biodb.QueryGO(db, taxon); err == nil {
-			biodb.Write2dSlice(result, os.Stdout)
-		}
 	case isdigital && table == "Pathway":
-		var result [][]string
+		var wt biodb.Writer
+		wt = os.Stdout
+		err = biodb.QueryPathway(DB, taxon, wt)
 
-		if result, err = biodb.QueryPathway(db, taxon); err == nil {
-			biodb.Write2dSlice(result, os.Stdout)
-		}
 	default:
 		fmt.Println(USAGE)
 		os.Exit(2)
