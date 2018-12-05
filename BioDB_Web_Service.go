@@ -1,263 +1,288 @@
-package biodb
+package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"database/sql"
+	"encoding/json"
+	"flag"
 	"fmt"
+	"github.com/d2jvkpn/gopkgs/biodb"
 	_ "github.com/go-sql-driver/mysql"
-	"net/url"
+	"html/template"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
-func QueryTaxonomyID(db *sql.DB, taxon_id string) (ti *Taxon_infor, err error) {
-	ti = new(Taxon_infor)
-	ti.Taxon_id = taxon_id
+const USAGE = `BioDB web service, usage:
+  $ BioDB_Web_Service  [-p port]
+`
 
-	query := fmt.Sprintf("select scientific_name,taxon_rank,"+
-		"parent_id from Taxonomy where taxon_id = '%s';", taxon_id)
+const LISENSE = `
+author: d2jvkpn
+version: 0.5
+release: 2018-12-05
+project: https://github.com/d2jvkpn/BioDB
+lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
+`
 
-	err = db.QueryRow(query).Scan(&ti.Scientific_name, &ti.Taxon_rank,
-		&ti.Parent_id)
+var (
+	DB                                    *sql.DB
+	SearchBts                             []byte
+	InvalidQuery, NotFound, InternalError *template.Template
+	DlTmpl, TnTmpl, GnTmpl                *template.Template
+)
 
-	return
-}
+const (
+	DBuser   = "hello"
+	DBpasswd = ""
+	DBhost   = "tcp(localhost:3306)"
+)
 
-func QueryTaxonomyName(db *sql.DB, taxon_name string) (tlist []*Taxon_infor,
-	err error) {
+func main() {
+	var port string
+	var err error
 
-	var rows *sql.Rows
+	flag.StringVar(&port, "p", ":8000", "set port")
 
-	query := fmt.Sprintf("select taxon_id,scientific_name,taxon_rank,"+
-		"parent_id from Taxonomy where escape_name = '%s';",
-		NameEscape(taxon_name, true))
-
-
-	if rows, err = db.Query(query); err != nil {
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		ti := new(Taxon_infor)
-
-		err = rows.Scan(&ti.Taxon_id, &ti.Scientific_name, &ti.Taxon_rank,
-			&ti.Parent_id)
-		if err != nil {
-			return
-		}
-
-		tlist = append(tlist, ti)
+	flag.Usage = func() {
+		fmt.Println(USAGE)
+		flag.PrintDefaults()
+		fmt.Println(LISENSE)
+		os.Exit(2)
 	}
 
-	if err = rows.Err(); err == nil && len(tlist) == 0 {
-		tlist, err = QueryTaxonomyHomotypic(db, taxon_name)
-	}
+	flag.Parse()
+	ValidPort(&port)
 
-	return
-}
+	DB, err = sql.Open("mysql",
+		fmt.Sprintf("%s:%s@%s/BioDB", DBuser, DBpasswd, DBhost))
 
-func QueryTaxonomyHomotypic(db *sql.DB, taxon_name string) (
-	tlist []*Taxon_infor, err error) {
-
-	var rows *sql.Rows
-
-	query := fmt.Sprintf("select taxon_id from Taxonomy_homotypic where "+
-		"name = '%s';", NameEscape(taxon_name, true))
-
-	if rows, err = db.Query(query); err != nil {
-		return
-	}
-
-	for rows.Next() {
-		ti := new(Taxon_infor)
-
-		if err = rows.Scan(&ti.Taxon_id); err != nil {
-			return
-		}
-
-		if ti, err = QueryTaxonomyID(db, ti.Taxon_id); err != nil {
-			return
-		}
-
-		tlist = append(tlist, ti)
-	}
-
-	if err = rows.Err(); err == nil && len(tlist) == 0 {
-		err = sql.ErrNoRows
-	}
-
-	return
-}
-
-func QueryTaxonomy(db *sql.DB, taxon string) (
-	tlist []*Taxon_infor, err error) {
-
-	isdigital, _ := regexp.MatchString("^[1-9][0-9]*$", taxon)
-
-	if isdigital {
-		var t *Taxon_infor
-
-		if t, err = QueryTaxonomyID(db, taxon); err == nil {
-			tlist = append(tlist, t)
-		}
-
-		return
-	}
-
-	tlist, err = QueryTaxonomyName(db, taxon)
-
-	return
-}
-
-func QueryGenome(db *sql.DB, taxon string) (result []*Genome, err error) {
-	var rows *sql.Rows
-	var query string
-
-	isdigital, _ := regexp.MatchString("^[1-9][0-9]*$", taxon)
-
-	if isdigital {
-		query = fmt.Sprintf("select * from Genome where taxon_id = '%s';",
-			taxon)
-	} else {
-		query = fmt.Sprintf("select * from Genome where organism_name "+
-			"like '%s%%';", taxon)
-	}
-
-	if rows, err = db.Query(query); err != nil {
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		g := new(Genome)
-
-		if err = rows.Scan(&g.Taxon_id, &g.Organism_name, &g.URL,
-			&g.Information); err != nil {
-			return
-		}
-
-		result = append(result, g)
-	}
-
-	if err = rows.Err(); err == nil && len(result) == 0 {
-		err = sql.ErrNoRows
-	}
-
-	return
-}
-
-func (qf *QueryForm) MatchTaxonID(db *sql.DB) (err error) {
-	var t string
-
-	query := fmt.Sprintf("select taxon_id from %s where taxon_id = '%s';",
-		qf.Table, qf.Taxon)
-
-	err = db.QueryRow(query).Scan(&t)
-
-	return
-}
-
-func QueryGO(db *sql.DB, taxon_id string, wt Writer) (err error) {
-	var rows *sql.Rows
-
-	query := fmt.Sprintf("select genes,GO_id from GO where taxon_id = '%s';", taxon_id)
-	if rows, err = db.Query(query); err != nil {
-		return
-	}
-	defer rows.Close()
-
-	_, err = wt.Write([]byte("genes\tGO_id\n"))
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer DB.Close()
+
+	http.HandleFunc("/", WriteSearch)
+	http.HandleFunc("/query", QueryTable)
+
+	if err = http.ListenAndServe(port, nil); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func init() {
+	var err error
+
+	if SearchBts, err = ioutil.ReadFile("html/Search.html"); err != nil {
+		log.Fatal(err)
+	}
+
+	InvalidQuery, err = template.ParseFiles("html/InvalidQuery.tmpl")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	NotFound, err = template.ParseFiles("html/NotFound.tmpl")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	InternalError, err = template.ParseFiles("html/InternalError.tmpl")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	DlTmpl, err = template.ParseFiles("html/Download.tmpl")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var b []byte
+	if b, err = ioutil.ReadFile("html/Results_Genome.tmpl"); err != nil {
+		log.Fatal(err)
+	}
+
+	GnTmpl = template.Must(template.New("").Funcs(funcMap).Parse(string(b)))
+	// GnTmpl, err = template.ParseFiles("html/Results_Genome.tmpl")
+
+	if b, err = ioutil.ReadFile("html/Results_Taxonomy.tmpl"); err != nil {
+		log.Fatal(err)
+	}
+
+	TnTmpl = template.Must(template.New("").Funcs(funcMap).Parse(string(b)))
+}
+
+func WriteSearch(w http.ResponseWriter, r *http.Request) {
+	w.Write(SearchBts)
+}
+
+func ValidPort(port *string) {
+	var ok bool
+
+	if ok, _ = regexp.MatchString("^[1-9][0-9]*$", *port); ok {
+		*port = ":" + *port
 		return
 	}
 
-	var c int
-	rc := make([]string, 2)
-
-	for rows.Next() {
-		if err = rows.Scan(&rc[0], &rc[1]); err != nil {
-			return
-		}
-
-		_, err = wt.Write([]byte(rc[0] + "\t" + rc[1] + "\n"))
-
-		if err != nil {
-			return
-		}
-
-		c++
-	}
-
-	if err = rows.Err(); err == nil && c == 0 {
-		err = sql.ErrNoRows
+	if ok, _ = regexp.MatchString("^:[1-9][0-9]*$", *port); !ok {
+		log.Fatalf("invalid port \"%s\"\n", *port)
 	}
 
 	return
 }
 
-func QueryPathway(db *sql.DB, taxon_id string, wt Writer) (err error) {
-	var rows *sql.Rows
+func QueryTable(w http.ResponseWriter, r *http.Request) {
+	var err error
 
-	query := fmt.Sprintf("select pathway_id,gene_id,gene_information,KO_id,"+
-		"KO_information,EC_ids from Pathway where taxon_id = '%s';", taxon_id)
+	err = r.ParseForm()
 
-	if rows, err = db.Query(query); err != nil {
+	QF := biodb.QueryForm{
+		strings.Join(strings.Fields(r.FormValue("taxon")), " "),
+		r.FormValue("table"),
+		r.FormValue("download")}
+
+	if err != nil {
+		w.Header().Add("StatusCode", strconv.Itoa(http.StatusBadRequest))
+		w.Header().Add("Status", http.StatusText(400))
+		InvalidQuery.Execute(w, &QF)
 		return
 	}
-	defer rows.Close()
 
-	wt.Write([]byte("pathway_id\tgene_id\tgene_information\tKO_id\t" +
-		"KO_information\tEC_ids\n"))
+	isdigital, _ := regexp.MatchString("^[1-9][0-9]*$", QF.Taxon)
 
-	var c int
-	rc := make([]string, 6)
-	for rows.Next() {
-		err = rows.Scan(&rc[0], &rc[1], &rc[2], &rc[3], &rc[4], &rc[5])
-		if err != nil {
-			return
+	switch {
+	case QF.Table == "Taxonomy":
+		var tlist []*biodb.Taxon_infor
+
+		if tlist, err = biodb.QueryTaxonomy(DB, QF.Taxon); err != nil {
+			break
 		}
 
-		_, err = wt.Write([]byte(strings.Join(rc, "\t") + "\n"))
-		if err != nil {
-			return
+		if QF.Download == "true" {
+			w.Header().Add("StatusCode", "200")
+			w.Header().Add("Status", "ok")
+			w.Header().Add("Content-Type", "application/json; charset=utf-8")
+			jsbytes, _ := json.MarshalIndent(tlist, "", "  ")
+			_, err = w.Write(jsbytes)
+
+		} else {
+			data := struct {
+				*biodb.QueryForm
+				Taxonlist []*biodb.Taxon_infor
+			}{&QF, tlist}
+
+			err = TnTmpl.Execute(w, &data)
 		}
 
-		c++
+	case QF.Table == "Genome":
+		var glist []*biodb.Genome
+		var matchtype string
+
+		if isdigital {
+			matchtype = "EXACTLY"
+		} else {
+			matchtype = "AMBIGUTILY"
+		}
+
+		if glist, err = biodb.QueryGenome(DB, QF.Taxon); err != nil {
+			break
+		}
+
+		if QF.Download == "true" {
+			w.Header().Add("StatusCode", "200")
+			w.Header().Add("Status", "ok")
+			w.Header().Add("Content-Type", "application/json; charset=utf-8")
+			jsbytes, _ := json.MarshalIndent(glist, "", "  ")
+			_, err = w.Write(jsbytes)
+
+		} else {
+			data := struct {
+				MatchType string
+				*biodb.QueryForm
+				Genomelist []*biodb.Genome
+			}{matchtype, &QF, glist}
+
+			err = GnTmpl.Execute(w, &data)
+		}
+
+	case isdigital && (QF.Table == "GO" || QF.Table == "Pathway"):
+		if QF.Download == "true" {
+			var buf bytes.Buffer
+			var wt biodb.Writer
+			var dispo string
+			gzw := gzip.NewWriter(&buf)
+			wt = gzw
+
+			if QF.Table == "GO" {
+				err = biodb.QueryGO(DB, QF.Taxon, wt)
+				dispo = "attachment; filename=\"Gene_Ontology.%s.tsv.gz\""
+			} else {
+				err = biodb.QueryPathway(DB, QF.Taxon, wt)
+				dispo = "attachment; filename=\"KEGG_Pathway.%s.tsv.gz\""
+			}
+
+			gzw.Close()
+
+			if err != nil {
+				break
+			}
+
+			w.Header().Set("Content-Type", "application/x-gzip")
+			w.Header().Set("Content-Disposition", fmt.Sprintf(dispo, QF.Taxon))
+
+			_, err = w.Write(buf.Bytes())
+
+		} else {
+			err = QF.MatchTaxonID(DB)
+
+			if err != nil {
+				break
+			}
+
+			err = DlTmpl.Execute(w, &QF)
+		}
+
+	default:
+		w.Header().Add("StatusCode", strconv.Itoa(http.StatusBadRequest))
+		w.Header().Add("Status", http.StatusText(400))
+		InvalidQuery.Execute(w, &QF)
+		return
 	}
 
-	if err = rows.Err(); err == nil && c == 0 {
-		err = sql.ErrNoRows
+	switch err {
+	case nil:
+		return
+
+	case sql.ErrNoRows:
+		w.Header().Add("StatusCode", strconv.Itoa(http.StatusNotFound))
+		w.Header().Add("Status", http.StatusText(404))
+
+		NotFound.Execute(w, &QF)
+
+	default:
+		log.Printf("an error ocurred quering %s in %s: %s\n",
+			QF.Taxon, QF.Table, err)
+
+		w.Header().Add("StatusCode",
+			strconv.Itoa(http.StatusInternalServerError))
+
+		w.Header().Add("Status", http.StatusText(500))
+
+		InternalError.Execute(w, &QF)
 	}
-
-	return
 }
 
-func NameEscape(i string, tolower bool) string {
-	if tolower {
-		i = strings.ToLower(i)
-	}
-
-	return url.QueryEscape(strings.Join(strings.Fields(i), " "))
+func Add(a, b int) string {
+	return strconv.Itoa(a + b)
 }
 
-type Writer interface {
-	Write(p []byte) (n int, err error)
-}
-
-type Taxon_infor struct {
-	Taxon_id, Scientific_name string
-	Taxon_rank, Parent_id     string
-}
-
-type Taxonomy struct {
-	Taxon_infor
-	Escape_name string
-}
-
-type Genome struct {
-	Taxon_id, Organism_name, URL, Information string
-}
-
-type QueryForm struct {
-	Taxon, Table, Download string
+var funcMap = template.FuncMap{
+	"Add": Add,
 }
