@@ -20,14 +20,16 @@
   <br></br>
   <table style="text-align: left" border="1" cellpadding="4" width="80%">
     <tr >
+      <th></th>
       <th>Taxon id</th>
       <th>Scientific name</th>
       <th>Taxon rank</th>
       <th>Parent id</th>
     <tr>
 
-    {{range .Taxonlist}}
+    {{range $i, $r := .Taxonlist}}
       <tr>
+        <td>No.{{Add $i 1}}</td>
         <td>{{.Taxon_id}}</td>
         <td>{{.Scientific_name}}</td>
         <td>{{.Taxon_rank}}</td>
