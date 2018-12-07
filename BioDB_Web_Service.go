@@ -10,6 +10,7 @@ import (
 	"github.com/d2jvkpn/gopkgs/biodb"
 	_ "github.com/go-sql-driver/mysql"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -25,17 +26,15 @@ const USAGE = `BioDB web service, usage:
 
 const LISENSE = `
 author: d2jvkpn
-version: 0.5
-release: 2018-12-05
+version: 0.6
+release: 2018-12-08
 project: https://github.com/d2jvkpn/BioDB
 lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 `
 
 var (
-	DB                                    *sql.DB
-	SearchBts                             []byte
-	InvalidQuery, NotFound, InternalError *template.Template
-	DlTmpl, TnTmpl, GnTmpl                *template.Template
+	DB    *sql.DB
+	Tmpls map[string]*template.Template
 )
 
 const (
@@ -69,7 +68,7 @@ func main() {
 
 	defer DB.Close()
 
-	http.HandleFunc("/", WriteSearch)
+	http.HandleFunc("/", ServerSearch)
 	http.HandleFunc("/query", QueryTable)
 
 	if err = http.ListenAndServe(port, nil); err != nil {
@@ -80,47 +79,49 @@ func main() {
 func init() {
 	var err error
 
-	if SearchBts, err = ioutil.ReadFile("html/Search.html"); err != nil {
-		log.Fatal(err)
-	}
+	Tmpls = make(map[string]*template.Template)
 
-	InvalidQuery, err = template.ParseFiles("html/InvalidQuery.tmpl")
+	Tmpls["search"], err = template.ParseFiles("html/Search.html")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	NotFound, err = template.ParseFiles("html/NotFound.tmpl")
+	Tmpls["invalid"], err = template.ParseFiles("html/InvalidQuery.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	InternalError, err = template.ParseFiles("html/InternalError.tmpl")
+	Tmpls["notfound"], err = template.ParseFiles("html/NotFound.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	DlTmpl, err = template.ParseFiles("html/Download.tmpl")
+	Tmpls["error"], err = template.ParseFiles("html/InternalError.html")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	Tmpls["download"], err = template.ParseFiles("html/Download.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var b []byte
+
 	if b, err = ioutil.ReadFile("html/Results_Genome.tmpl"); err != nil {
 		log.Fatal(err)
 	}
 
-	GnTmpl = template.Must(template.New("").Funcs(funcMap).Parse(string(b)))
-	// GnTmpl, err = template.ParseFiles("html/Results_Genome.tmpl")
+	Tmpls["genome"] = template.Must(template.New("").Funcs(funcMap).
+		Parse(string(b)))
+	// Tmpls["genome"], err = template.ParseFiles("html/Results_Genome.tmpl")
 
 	if b, err = ioutil.ReadFile("html/Results_Taxonomy.tmpl"); err != nil {
 		log.Fatal(err)
 	}
 
-	TnTmpl = template.Must(template.New("").Funcs(funcMap).Parse(string(b)))
-}
-
-func WriteSearch(w http.ResponseWriter, r *http.Request) {
-	w.Write(SearchBts)
+	Tmpls["taxon"] = template.Must(template.New("").Funcs(funcMap).
+		Parse(string(b)))
 }
 
 func ValidPort(port *string) {
@@ -138,24 +139,32 @@ func ValidPort(port *string) {
 	return
 }
 
+func ServerSearch(w http.ResponseWriter, r *http.Request) {
+	Tmpls["search"].Execute(w, nil)
+}
+
 func QueryTable(w http.ResponseWriter, r *http.Request) {
 	var err error
-
-	err = r.ParseForm()
+	var isdigital bool
+	var ok bool
+	r.ParseForm()
 
 	QF := biodb.QueryForm{
 		strings.Join(strings.Fields(r.FormValue("taxon")), " "),
 		r.FormValue("table"),
 		r.FormValue("download")}
 
-	if err != nil {
-		w.Header().Add("StatusCode", strconv.Itoa(http.StatusBadRequest))
-		w.Header().Add("Status", http.StatusText(400))
-		InvalidQuery.Execute(w, &QF)
-		return
+	if QF.Download != "true" {
+		// fmt.Println(QF.Download)
+		QF.Download = "false"
 	}
 
-	isdigital, _ := regexp.MatchString("^[1-9][0-9]*$", QF.Taxon)
+	if isdigital, ok = QF.IsValid(); !ok {
+		w.Header().Add("StatusCode", strconv.Itoa(http.StatusBadRequest))
+		w.Header().Add("Status", http.StatusText(400))
+		Tmpls["invalid"].Execute(w, &QF)
+		return
+	}
 
 	switch {
 	case QF.Table == "Taxonomy":
@@ -178,18 +187,34 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 				Taxonlist []*biodb.Taxon_infor
 			}{&QF, tlist}
 
-			err = TnTmpl.Execute(w, &data)
+			err = Tmpls["taxon"].Execute(w, &data)
 		}
 
-	case QF.Table == "Genome":
-		var glist []*biodb.Genome
-		var matchtype string
+	case isdigital && QF.Table == "Subclass":
+		var tlist []*biodb.Taxon_infor
 
-		if isdigital {
-			matchtype = "EXACTLY"
+		if tlist, err = biodb.QuerySubclass(DB, QF.Taxon); err != nil {
+			break
+		}
+
+		if QF.Download == "true" {
+			w.Header().Add("StatusCode", "200")
+			w.Header().Add("Status", "ok")
+			w.Header().Add("Content-Type", "application/json; charset=utf-8")
+			jsbytes, _ := json.MarshalIndent(tlist, "", "  ")
+			_, err = w.Write(jsbytes)
+
 		} else {
-			matchtype = "AMBIGUTILY"
+			data := struct {
+				*biodb.QueryForm
+				Taxonlist []*biodb.Taxon_infor
+			}{&QF, tlist}
+
+			err = Tmpls["taxon"].Execute(w, &data)
 		}
+
+	case isdigital && QF.Table == "Genome":
+		var glist []*biodb.Genome
 
 		if glist, err = biodb.QueryGenome(DB, QF.Taxon); err != nil {
 			break
@@ -204,18 +229,17 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 
 		} else {
 			data := struct {
-				MatchType string
 				*biodb.QueryForm
 				Genomelist []*biodb.Genome
-			}{matchtype, &QF, glist}
+			}{&QF, glist}
 
-			err = GnTmpl.Execute(w, &data)
+			err = Tmpls["genome"].Execute(w, &data)
 		}
 
 	case isdigital && (QF.Table == "GO" || QF.Table == "Pathway"):
 		if QF.Download == "true" {
 			var buf bytes.Buffer
-			var wt biodb.Writer
+			var wt io.Writer
 			var dispo string
 			gzw := gzip.NewWriter(&buf)
 			wt = gzw
@@ -240,19 +264,25 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 			_, err = w.Write(buf.Bytes())
 
 		} else {
-			err = QF.MatchTaxonID(DB)
-
-			if err != nil {
+			if err = QF.MatchTaxonID(DB); err != nil {
 				break
 			}
 
-			err = DlTmpl.Execute(w, &QF)
+			var ti *biodb.Taxon_infor
+			ti, _ = biodb.QueryTaxonomyID(DB, QF.Taxon)
+
+			data := struct {
+				Scientific_name *string
+				*biodb.QueryForm
+			}{&ti.Scientific_name, &QF}
+
+			err = Tmpls["download"].Execute(w, &data)
 		}
 
 	default:
 		w.Header().Add("StatusCode", strconv.Itoa(http.StatusBadRequest))
 		w.Header().Add("Status", http.StatusText(400))
-		InvalidQuery.Execute(w, &QF)
+		Tmpls["invalid"].Execute(w, &QF)
 		return
 	}
 
@@ -264,7 +294,7 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("StatusCode", strconv.Itoa(http.StatusNotFound))
 		w.Header().Add("Status", http.StatusText(404))
 
-		NotFound.Execute(w, &QF)
+		Tmpls["notfound"].Execute(w, &QF)
 
 	default:
 		log.Printf("an error ocurred quering %s in %s: %s\n",
@@ -275,7 +305,7 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Add("Status", http.StatusText(500))
 
-		InternalError.Execute(w, &QF)
+		Tmpls["error"].Execute(w, &QF)
 	}
 }
 
