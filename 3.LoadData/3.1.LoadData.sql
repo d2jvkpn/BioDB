@@ -11,6 +11,18 @@ alter table BioDB.Taxonomy add index escape_name (escape_name);
 alter table BioDB.Taxonomy_homotypic add index taxon_id (taxon_id);
 alter table BioDB.Taxonomy_homotypic add index name (name);
 
+
+----
+load data local infile 'data_GO/go.def.tsv' into table BioDB.GO_definition 
+ignore 1 lines;
+
+
+load data local infile 'data_GO/go.rel.tsv' into table BioDB.GO_relation 
+ignore 1 lines;
+
+alter table BioDB.GO_definition add index GO_id (GO_id);
+alter table BioDB.GO_relation add index GO_id (GO_id);
+
 ----
 load data local infile 'data_Pathway/Pathway.tsv' into table BioDB.Pathway 
 ignore 1 lines;
