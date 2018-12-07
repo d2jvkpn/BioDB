@@ -38,7 +38,7 @@ var (
 )
 
 const (
-	DBuser   = "hello"
+	DBuser   = "world"
 	DBpasswd = ""
 	DBhost   = "tcp(localhost:3306)"
 )
