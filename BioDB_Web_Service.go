@@ -108,7 +108,7 @@ func init() {
 
 	var b []byte
 
-	if b, err = ioutil.ReadFile("html/Results_Genome.tmpl"); err != nil {
+	if b, err = ioutil.ReadFile("html/Genome.tmpl"); err != nil {
 		log.Fatal(err)
 	}
 
@@ -116,7 +116,7 @@ func init() {
 		Parse(string(b)))
 	// Tmpls["genome"], err = template.ParseFiles("html/Results_Genome.tmpl")
 
-	if b, err = ioutil.ReadFile("html/Results_Taxonomy.tmpl"); err != nil {
+	if b, err = ioutil.ReadFile("html/Taxonomy.tmpl"); err != nil {
 		log.Fatal(err)
 	}
 
