@@ -13,28 +13,37 @@
   
   <div align="center">
     <p>
-      <i> <b>Genome</b></i> results of <i><b>{{.Taxon}}</b> </i>
+      <i> <b>Genome</b></i> Results of <i><b>{{.Taxon}}</b> </i>
     </p>
   </div>
 
-  <br></br>
+  <p align="center">
+    <button onclick="goBack()"> Go back </button>
+  </p>
 
-  <div style="left: 10%; width: 80%; position: absolute">    
-    <p> <b>{{.MatchType}}</b> match with <b>{{.Taxon}}</b></p>
+  <script>
+    function goBack() {
+      window.history.back();
+    }
+  </script>
 
+
+  <div style="left: 10%; width: 80%; position: absolute">
     <hr style="border:1 dashed #987cb9" color=#987cb9 size=1>
 
     {{range $i, $r := .Genomelist}}
       <p>
 		<b>No.{{Add $i 1}}</b>&nbsp;&nbsp;&nbsp;
         <b>Taxon id</b>: {{.Taxon_id}}&nbsp;&nbsp;&nbsp;
-        <b>Organism name</b>: {{.Organism_name}}
+        <b>Organism name</b>: <i>{{.Organism_name}}</i>
       </p>
       <p><b>URL</b>: <a href="{{.URL}}">{{.URL}}<a></p>
       <p><b>Information</b>: {{.Information}}</p>
  
       <hr style="border:1 dashed #987cb9" color=#987cb9 size=1>
     {{end}}
+
+  </div>
 
 </body>
 </html>
