@@ -1,6 +1,6 @@
 -- author: d2jvkpn
--- version: 0.3
--- release: 2018-11-30
+-- version: 0.4
+-- release: 2018-12-06
 -- project: https://github.com/d2jvkpn/BioDB
 -- license: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 
@@ -11,7 +11,15 @@ insert into mysql.user (User, Password, Host)
     values ("hello", password(""), "localhost");
 -- set password for "hello"@"localhost" = PASSWORD("");
 
+
 grant all privileges on BioDB.* to 'hello'@'localhost';
+flush privileges;
+
+
+insert into mysql.user (User, Password, Host)
+    values ("world", password(""), "localhost");
+
+grant select on BioDB.* to 'world'@'localhost';
 flush privileges;
 
 ---- mysql -u hello;
@@ -40,6 +48,21 @@ create table BioDB.GO (
         foreign key (taxon_id) references Taxonomy (taxon_id)
         on delete cascade
         on update restrict
+) ENGINE = InnoDB;
+
+
+create table BioDB.GO_definition (
+    GO_id        char(10)       not null,
+    name         varchar(256)   not null,
+    namespace    char(18)       not null,
+    definition   varchar(2048)  not null
+) ENGINE = InnoDB;
+
+
+create table BioDB.GO_relation (
+    GO_id        char(10)       not null,
+    relation     varchar(32)    not null,
+    targte       varchar(2048)  not null
 ) ENGINE = InnoDB;
 
 
