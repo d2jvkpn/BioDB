@@ -39,7 +39,7 @@
 
     {{range $i, $r := .Taxonlist}}
       <tr>
-        <td>No.{{Add $i 1}}</td>
+        <td><b>No.{{Add $i 1}}<b></td>
         <td>{{.Taxon_id}}</td>
         <td><i>{{.Scientific_name}}</i></td>
         <td>{{.Taxon_rank}}</td>
@@ -53,6 +53,10 @@
         <td>
           <a href="/query?table=Subclass&taxon={{.Taxon_id}}">
             Subclass
+          </a>;
+
+          <a href="/query?table=Genome&taxon={{.Taxon_id}}">
+            Genome
           </a>;
 
           <a href="/query?table=GO&taxon={{.Taxon_id}}">
