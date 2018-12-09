@@ -62,18 +62,15 @@ func main() {
 	DB, err = sql.Open("mysql",
 		fmt.Sprintf("%s:%s@%s/BioDB", DBuser, DBpasswd, DBhost))
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	ErrExit(err)
 
 	defer DB.Close()
 
 	http.HandleFunc("/", ServerSearch)
 	http.HandleFunc("/query", QueryTable)
 
-	if err = http.ListenAndServe(port, nil); err != nil {
-		log.Fatal(err)
-	}
+	err = http.ListenAndServe(port, nil)
+	ErrExit(err)
 }
 
 func init() {
@@ -82,43 +79,31 @@ func init() {
 	Tmpls = make(map[string]*template.Template)
 
 	Tmpls["search"], err = template.ParseFiles("html/Search.html")
-	if err != nil {
-		log.Fatal(err)
-	}
+	ErrExit(err)
 
 	Tmpls["invalid"], err = template.ParseFiles("html/InvalidQuery.tmpl")
-	if err != nil {
-		log.Fatal(err)
-	}
+	ErrExit(err)
 
 	Tmpls["notfound"], err = template.ParseFiles("html/NotFound.tmpl")
-	if err != nil {
-		log.Fatal(err)
-	}
+	ErrExit(err)
 
 	Tmpls["error"], err = template.ParseFiles("html/InternalError.html")
-	if err != nil {
-		log.Fatal(err)
-	}
+	ErrExit(err)
 
 	Tmpls["download"], err = template.ParseFiles("html/Download.tmpl")
-	if err != nil {
-		log.Fatal(err)
-	}
+	ErrExit(err)
 
 	var b []byte
 
-	if b, err = ioutil.ReadFile("html/Genome.tmpl"); err != nil {
-		log.Fatal(err)
-	}
+	b, err = ioutil.ReadFile("html/Genome.tmpl")
+	ErrExit(err)
 
 	Tmpls["genome"] = template.Must(template.New("").Funcs(funcMap).
 		Parse(string(b)))
 	// Tmpls["genome"], err = template.ParseFiles("html/Results_Genome.tmpl")
 
-	if b, err = ioutil.ReadFile("html/Taxonomy.tmpl"); err != nil {
-		log.Fatal(err)
-	}
+	b, err = ioutil.ReadFile("html/Taxonomy.tmpl")
+	ErrExit(err)
 
 	Tmpls["taxon"] = template.Must(template.New("").Funcs(funcMap).
 		Parse(string(b)))
@@ -304,7 +289,6 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 			strconv.Itoa(http.StatusInternalServerError))
 
 		w.Header().Add("Status", http.StatusText(500))
-
 		Tmpls["error"].Execute(w, &QF)
 	}
 }
@@ -315,4 +299,10 @@ func Add(a, b int) string {
 
 var funcMap = template.FuncMap{
 	"Add": Add,
+}
+
+func ErrExit(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }
