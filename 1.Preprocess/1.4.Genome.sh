@@ -34,7 +34,7 @@ Ensembl_genome_Vertebrate.tsv > Ensembl_genome.tsv
 
   {
     awk 'BEGIN{FS=OFS="\t"} NR==1{for(i=4; i<= NF; i++) a[i]=$i}
-    NR>1{sub("ftp:", "https:", $3); line=$1"\t"$2"\t"$3"\t";
+    NR>1{line=$1"\t"$2"\t"$3"\t";
     for(i=4; i<=NF; i++) {if ($i!="") line=line"; "a[i]" \""$i"\""};
     sub("\t; ", "\t", line); print line}' NCBI_genome.tsv
 
@@ -45,7 +45,7 @@ Ensembl_genome_Vertebrate.tsv > Ensembl_genome.tsv
   } | sort -k1,1n
 } > Genome.tsv
 
-go run ../1.Preprocess/TSV_fileds_maxlen.go Genome.tsv
+# go run ../1.Preprocess/TSV_StrLen.go Genome.tsv
 
 rm Ensembl_genome_notVertebrate.tsv Ensembl_genome_Vertebrate.tsv
 
