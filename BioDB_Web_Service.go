@@ -26,8 +26,8 @@ const USAGE = `BioDB web service, usage:
 
 const LISENSE = `
 author: d2jvkpn
-version: 0.6
-release: 2018-12-08
+version: 0.7
+release: 2018-12-09
 project: https://github.com/d2jvkpn/BioDB
 lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 `
@@ -139,14 +139,17 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 		r.FormValue("table"),
 		r.FormValue("download")}
 
+	// fmt.Println(QF.Download)
 	if QF.Download != "true" {
-		// fmt.Println(QF.Download)
 		QF.Download = "false"
 	}
 
+	w.Header().Add("StatusCode", "200")
+	w.Header().Add("Status", "ok")
+
 	if isdigital, ok = QF.IsValid(); !ok {
-		w.Header().Add("StatusCode", strconv.Itoa(http.StatusBadRequest))
-		w.Header().Add("Status", http.StatusText(400))
+		w.Header().Set("StatusCode", strconv.Itoa(http.StatusBadRequest))
+		w.Header().Set("Status", http.StatusText(400))
 		Tmpls["invalid"].Execute(w, &QF)
 		return
 	}
@@ -160,8 +163,6 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if QF.Download == "true" {
-			w.Header().Add("StatusCode", "200")
-			w.Header().Add("Status", "ok")
 			w.Header().Add("Content-Type", "application/json; charset=utf-8")
 			jsbytes, _ := json.MarshalIndent(tlist, "", "  ")
 			_, err = w.Write(jsbytes)
@@ -183,8 +184,6 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if QF.Download == "true" {
-			w.Header().Add("StatusCode", "200")
-			w.Header().Add("Status", "ok")
 			w.Header().Add("Content-Type", "application/json; charset=utf-8")
 			jsbytes, _ := json.MarshalIndent(tlist, "", "  ")
 			_, err = w.Write(jsbytes)
@@ -206,8 +205,6 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if QF.Download == "true" {
-			w.Header().Add("StatusCode", "200")
-			w.Header().Add("Status", "ok")
 			w.Header().Add("Content-Type", "application/json; charset=utf-8")
 			jsbytes, _ := json.MarshalIndent(glist, "", "  ")
 			_, err = w.Write(jsbytes)
@@ -221,54 +218,56 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 			err = Tmpls["genome"].Execute(w, &data)
 		}
 
-	case isdigital && (QF.Table == "GO" || QF.Table == "Pathway"):
-		if QF.Download == "true" {
-			var buf bytes.Buffer
-			var wt io.Writer
-			var dispo string
-			gzw := gzip.NewWriter(&buf)
-			wt = gzw
+	case isdigital && QF.Download == "true" &&
+		(QF.Table == "GO" || QF.Table == "Pathway"):
 
-			if QF.Table == "GO" {
-				err = biodb.QueryGO(DB, QF.Taxon, wt)
-				dispo = "attachment; filename=\"Gene_Ontology.%s.tsv.gz\""
-			} else {
-				err = biodb.QueryPathway(DB, QF.Taxon, wt)
-				dispo = "attachment; filename=\"KEGG_Pathway.%s.tsv.gz\""
-			}
+		var buf bytes.Buffer
+		var wt io.Writer
+		var dispo string
+		gzw := gzip.NewWriter(&buf)
+		wt = gzw
 
-			gzw.Close()
-
-			if err != nil {
-				break
-			}
-
-			w.Header().Set("Content-Type", "application/x-gzip")
-			w.Header().Set("Content-Disposition", fmt.Sprintf(dispo, QF.Taxon))
-
-			_, err = w.Write(buf.Bytes())
-
+		if QF.Table == "GO" {
+			err = biodb.QueryGO(DB, QF.Taxon, wt)
+			dispo = "attachment; filename=\"Gene_Ontology.%s.tsv.gz\""
 		} else {
-			if err = QF.MatchTaxonID(DB); err != nil {
-				break
-			}
-
-			var ti *biodb.Taxon_infor
-			ti, _ = biodb.QueryTaxonomyID(DB, QF.Taxon)
-
-			data := struct {
-				Scientific_name *string
-				*biodb.QueryForm
-			}{&ti.Scientific_name, &QF}
-
-			err = Tmpls["download"].Execute(w, &data)
+			err = biodb.QueryPathway(DB, QF.Taxon, wt)
+			dispo = "attachment; filename=\"KEGG_Pathway.%s.tsv.gz\""
 		}
 
+		gzw.Close()
+
+		if err != nil {
+			break
+		}
+
+		w.Header().Set("Content-Type", "application/x-gzip")
+		w.Header().Set("Content-Disposition", fmt.Sprintf(dispo, QF.Taxon))
+
+		_, err = w.Write(buf.Bytes())
+
+	case isdigital && QF.Download != "true" &&
+		(QF.Table == "GO" || QF.Table == "Pathway"):
+
+		if err = QF.MatchTaxonID(DB); err != nil {
+			break
+		}
+
+		var ti *biodb.Taxon_infor
+		ti, _ = biodb.QueryTaxonomyID(DB, QF.Taxon)
+		data := struct {
+			Scientific_name *string
+			*biodb.QueryForm
+		}{&ti.Scientific_name, &QF}
+
+		err = Tmpls["download"].Execute(w, &data)
+
 	default:
-		w.Header().Add("StatusCode", strconv.Itoa(http.StatusBadRequest))
-		w.Header().Add("Status", http.StatusText(400))
+		w.Header().Set("StatusCode", strconv.Itoa(http.StatusBadRequest))
+		w.Header().Set("Status", http.StatusText(400))
 		Tmpls["invalid"].Execute(w, &QF)
 		return
+
 	}
 
 	switch err {
@@ -276,8 +275,8 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 		return
 
 	case sql.ErrNoRows:
-		w.Header().Add("StatusCode", strconv.Itoa(http.StatusNotFound))
-		w.Header().Add("Status", http.StatusText(404))
+		w.Header().Set("StatusCode", strconv.Itoa(http.StatusNotFound))
+		w.Header().Set("Status", http.StatusText(404))
 
 		Tmpls["notfound"].Execute(w, &QF)
 
@@ -285,10 +284,11 @@ func QueryTable(w http.ResponseWriter, r *http.Request) {
 		log.Printf("an error ocurred quering %s in %s: %s\n",
 			QF.Taxon, QF.Table, err)
 
-		w.Header().Add("StatusCode",
+		w.Header().Set("StatusCode",
 			strconv.Itoa(http.StatusInternalServerError))
 
-		w.Header().Add("Status", http.StatusText(500))
+		w.Header().Set("Status", http.StatusText(500))
+
 		Tmpls["error"].Execute(w, &QF)
 	}
 }
