@@ -8,7 +8,7 @@
 
 **Screenshots**
 
-<div align="center"> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/01.png) </div>
+<div align="center"> ![img](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/01.png) </div>
 
 <div align="center">  ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/02.png) </div>
 
