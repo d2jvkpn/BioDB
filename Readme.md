@@ -8,18 +8,18 @@
 
 **Screenshots**
 
-<div align=right> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/01.png)
+<div align="center"> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/01.png) </div>
 
-<div align=right> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/02.png)
+<div align="center">  ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/02.png) </div>
 
-![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/03.png)
+<div align="center"> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/03.png) </div>
 
-![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/04.png)
+<div align="center"> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/04.png) </div>
 
-![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/05.png)
+<div align="center"> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/05.png) </div>
 
-![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/06.png)
+<div align="center"> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/06.png) </div>
 
-![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/07.png)
+<div align="center"> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/07.png) </div>
 
-![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/08.png)
+<div align="center"> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/08.png) </div>
