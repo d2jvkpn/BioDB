@@ -8,9 +8,9 @@
 
 **Screenshots**
 
-![img](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/01.png)
+<div align=right> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/01.png)
 
-![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/02.png)
+<div align=right> ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/02.png)
 
 ![](https://github.com/d2jvkpn/BioDB/blob/master/screenshots/03.png)
 
