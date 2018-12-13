@@ -13,7 +13,7 @@ import (
 )
 
 const USAGE = `Query BioDB, usage:
-  $ BioDB_SQL_query  <table_name>  <taxon>
+  $ BioDB_SQLquery  <table_name>  <taxon>
     arguments:
     "Taxonomy"   <taxon_id | taxon_name>,     exactly match
     "Genome"     <taxon_id | organism name>,  exactly | ambigutily match
