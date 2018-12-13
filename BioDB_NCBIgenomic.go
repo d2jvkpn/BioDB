@@ -13,7 +13,7 @@ import (
 
 const USAGE = `Query NCBI genomic information by providing taxonomy id, 
 scientific name or genome url, usage:
-  $ BioDB_NCBI_genomic  [-d directory]  <input>
+  $ BioDB_NCBIgenome  [-d directory]  <input>
 `
 
 const LISENSE = `
@@ -46,6 +46,7 @@ func main() {
 
 	if yes, _ := regexp.MatchString("^[1-9][0-9]*$", input); yes {
 		input = fmt.Sprintf(prefix+"/?term=txid%s[orgn]", input)
+
 	} else if !strings.Contains(input, prefix) {
 		input = strings.Join(strings.Fields(input), " ")
 		input = prefix + "/?term=" + url.QueryEscape(input)
