@@ -21,7 +21,7 @@ import (
 )
 
 const USAGE = `BioDB web service, usage:
-  $ BioDB_Web_Service  [-p port]
+  $ BioDB_Webservice  [-p port]
 `
 
 const LISENSE = `
