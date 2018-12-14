@@ -21,7 +21,7 @@ import (
 )
 
 const USAGE = `BioDB web service, usage:
-  $ BioDB_Webservice  [-p port]
+  $ BioDB_Web_Service  [-p port]
 `
 
 const LISENSE = `
@@ -130,8 +130,8 @@ func ServerSearch(w http.ResponseWriter, r *http.Request) {
 
 func QueryTable(w http.ResponseWriter, r *http.Request) {
 	var err error
-	var isdigital bool
-	var ok bool
+	var isdigital, ok bool
+
 	r.ParseForm()
 
 	QF := biodb.QueryForm{
