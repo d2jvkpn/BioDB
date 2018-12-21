@@ -11,10 +11,8 @@ insert into mysql.user (User, Password, Host)
     values ("hello", password(""), "localhost");
 -- set password for "hello"@"localhost" = PASSWORD("");
 
-
 grant all privileges on BioDB.* to 'hello'@'localhost';
 flush privileges;
-
 
 insert into mysql.user (User, Password, Host)
     values ("world", password(""), "localhost");
@@ -52,17 +50,17 @@ create table BioDB.GO (
 
 
 create table BioDB.GO_definition (
-    GO_id        char(10)       not null,
-    name         varchar(256)   not null,
-    namespace    char(18)       not null,
-    definition   varchar(2048)  not null
+    GO_id       char(10)       not null,
+    name        varchar(256)   not null,
+    namespace   char(18)       not null,
+    definition  varchar(2048)  not null
 ) ENGINE = InnoDB;
 
 
 create table BioDB.GO_relation (
-    GO_id        char(10)       not null,
-    relation     varchar(32)    not null,
-    targte       varchar(2048)  not null
+    GO_id     char(10)       not null,
+    relation  varchar(32)    not null,
+    target    varchar(2048)  not null
 ) ENGINE = InnoDB;
 
 
@@ -81,11 +79,22 @@ create table BioDB.Pathway (
 ) ENGINE = InnoDB;
 
 
+-- create table BioDB.Pathway_definition (
+--    id             char(6)       not null,
+--    name           varchar(255)  not null,
+--    parent_id      char(6)       not null,
+--    primary key    (id)
+-- ) ENGINE = InnoDB;
+--
+
 create table BioDB.Pathway_definition (
-    id             char(6)       not null,
-    name           varchar(255)  not null,
-    parent_id      char(6)       not null,
-    primary key    (id)
+    C_id             char(6)       not null,
+    C_name           varchar(128)  not null,
+    B_id             char(6)       not null,
+    B_name           varchar(128)  not null,
+    A_id             char(6)       not null,
+    A_name           varchar(128)  not null,
+    primary key    (C_id)
 ) ENGINE = InnoDB;
 
 
