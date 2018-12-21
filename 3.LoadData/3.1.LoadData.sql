@@ -36,8 +36,7 @@ alter table BioDB.Pathway add index pathway_id (pathway_id);
 load data local infile 'data_Pathway/Pathway_Definition.tsv' into table 
 BioDB.Pathway_definition ignore 1 lines;
 
-alter table BioDB.Pathway_definition add index id (id);
-alter table BioDB.Pathway_definition add index name (name);
+alter table BioDB.Pathway_definition add index C_id (C_id);
 
 ----
 load data local infile 'data_Genome/Genome.tsv' into table BioDB.Genome 
