@@ -46,7 +46,12 @@ if(++x[$1]==1) print}' > Pathway_Definition.0.tsv
 
 awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$5} ++x[$3]==1{print $3,$4,""}
 ++x[$5]==1{print $5,$6,$3}' Pathway_Definition.0.tsv |
-sort | sed '1i id\tname\tparent_id' > Pathway_Definition.tsv
+sort | sed '1i id\tname\tparent_id' > Pathway_Definition1.tsv
+
+awk 'BEGIN{FS=OFS="\t"} NR==1{print "C_id", "C_name", "B_id", "B_name",\
+"A_id", "A_name"; next} $1~"^A"{a[$1]=$2} $1~"^B"{a[$1]=$2; b[$1]=$3}
+$1~"^C"{print $1,$2,$3,a[$3],b[$3],a[b[$3]]}' Pathway_Definition1.tsv \
+> Pathway_Definition.tsv
 
 rm Pathway_Definition.0.tsv
 
