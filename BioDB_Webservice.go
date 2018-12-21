@@ -26,8 +26,8 @@ const USAGE = `BioDB web service, usage:
 
 const LISENSE = `
 author: d2jvkpn
-version: 0.7
-release: 2018-12-09
+version: 0.8
+release: 2018-12-20
 project: https://github.com/d2jvkpn/BioDB
 lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 `
