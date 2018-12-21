@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"github.com/d2jvkpn/gopkgs/biodb"
 	_ "github.com/go-sql-driver/mysql"
+	"io"
 	"log"
-	"strings"
 	"os"
 	"regexp"
+	"strings"
 )
 
 const USAGE = `Query BioDB, usage:
-  $ BioDB_SQLquery  <table_name>  <taxon>
+  $ BioDB_SQL_query  <table_name>  <taxon>
     arguments:
     "Taxonomy"   <taxon_id | taxon_name>,     exactly match
     "Genome"     <taxon_id | organism name>,  exactly | ambigutily match
@@ -67,12 +68,12 @@ func main() {
 		fmt.Println(string(jsbytes))
 
 	case isdigital && table == "GO":
-		var wt biodb.Writer
+		var wt io.Writer
 		wt = os.Stdout
 		err = biodb.QueryGO(DB, taxon, wt)
 
 	case isdigital && table == "Pathway":
-		var wt biodb.Writer
+		var wt io.Writer
 		wt = os.Stdout
 		err = biodb.QueryPathway(DB, taxon, wt)
 
