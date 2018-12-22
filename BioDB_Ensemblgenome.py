@@ -1,14 +1,20 @@
 #! /usr/bin/python3
 
 __author__ = 'd2jvkpn'
-__version__ = '1.1'
-__release__ = '2018-12-13'
+__version__ = '1.2'
+__release__ = '2018-12-22'
 __project__ = 'https://github.com/d2jvkpn/BioDB'
 __license__ = 'GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)'
 
 import os
 import requests
 from urllib.parse import urlparse
+import string
+import time
+from ftplib import FTP
+from bs4 import BeautifulSoup
+import pandas as pd
+from biomart import BiomartServer
 
 '''
 http://www.ensembl.org/index.html
@@ -55,8 +61,6 @@ Note:
 
 ####
 def formatSpeciesName(s):
-    import string
-
     wds = s.replace ("+", " ").split ()
 
     for i in range(len(wds)):
@@ -69,14 +73,12 @@ def formatSpeciesName(s):
 
 
 def query(url):
-    from bs4 import BeautifulSoup
-
     query = requests.get(url)
     if not query.ok: os.sys.exit('Failed to request "%s"' % url)
     bs = BeautifulSoup(query.text, 'html.parser')
 
     _  = bs.find('span', class_ = 'header').select('a')[0]
-    version = _.text.strip(')').split(' (')[1]
+    version = _.text.strip(')').split(' (', 1)[1].replace(") (", "_")
 
     dnaFTP = ''
 
@@ -87,9 +89,9 @@ def query(url):
     netloc = urlparse(dnaFTP).netloc
     path = urlparse(dnaFTP).path
 
-    _ = dnaFTP.replace('/dna/', '/')
-    ensembl = _.split('/')[-4].replace('release', 'Ensembl')
-    ScentificName = _.split('/')[-2]
+    _ = path.strip("/").split("/")
+    ensembl = _[_.index('fasta')-1].replace('release', 'Ensembl')
+    ScentificName = _[-2]
     ScentificName = ScentificName[0].upper() + ScentificName[1:]
 
     loca = '__'.join([ensembl, ScentificName, version])
@@ -97,9 +99,6 @@ def query(url):
 
 
 def getftp(netloc, path, loca, url):
-    import time
-    from ftplib import FTP
-
     at = time.strftime('%Y-%m-%d %H:%M:%S %z')
 
     ensembl, ScentificName, version = loca.split('__')
@@ -133,32 +132,29 @@ def getftp(netloc, path, loca, url):
         f.write('Scentific name: %s\n' % ScentificName.replace('_', ' '))
         f.write('Assembly version: %s\n' % version)
         f.write('Ensembl version: %s\n\n' % ensembl)
-        f.write('DNA fasta:\n    %s\n\n' % dna)
-        f.write('cdna fasta:\n    %s\n\n' % cdna)
-        f.write('ncrna fasta:\n    %s\n\n' % ncrna)
-        f.write('pep fasta:\n    %s\n\n' % pep)
-        f.write('annotation gtf:\n    %s\n' % gtf)
+        if 'dna' in locals(): f.write('DNA fasta:\n    %s\n\n' % dna)
+        if 'cdna' in locals(): f.write('cdna fasta:\n    %s\n\n' % cdna)
+        if 'ncrna' in locals(): f.write('ncrna fasta:\n    %s\n\n' % ncrna)
+        if 'pep' in locals(): f.write('pep fasta:\n    %s\n\n' % pep)
+        if 'gtf' in locals(): f.write('annotation gtf:\n    %s\n' % gtf)
     
     wget = 'wget -c -O {0} {1} -o {0}.download.logging &&\nrm {0}.download.logging'
 
     with open (loca + '/download.sh', 'w') as f:
         f.write('#! /bin/bash\n\n## URL: %s\n' % url)
         f.write('## Species: %s\n' % ScentificName.replace('_', ' '))
-        f.write('## Acess time: %s\n\n' % at)
-        f.write("\n{\n" + wget.format('genomic.fa.gz', dna) + "\n} &\n")
-        f.write("\n{\n" + wget.format('cdna.fa.gz', cdna) + "\n} &\n")
-        f.write("\n{\n" + wget.format('ncrna.fa.gz', ncrna) + "\n} &\n")
-        f.write("\n{\n" + wget.format('pep.fa.gz', pep) + "\n} &\n")
-        f.write("\n{\n" + wget.format('genomic.gtf.gz', gtf) + "\n} &\n")
-        f.write('wait\n')
+        f.write('## Acess time: %s\n' % at)
+        if 'dna' in locals(): f.write("\n{\n" + wget.format('genomic.fa.gz', dna) + "\n} &\n")
+        if 'cdna' in locals(): f.write("\n{\n" + wget.format('cdna.fa.gz', cdna) + "\n} &\n")
+        if 'ncrna' in locals(): f.write("\n{\n" + wget.format('ncrna.fa.gz', ncrna) + "\n} &\n")
+        if 'pep' in locals(): f.write("\n{\n" + wget.format('pep.fa.gz', pep) + "\n} &\n")
+        if 'gtf' in locals(): f.write("\n{\n" + wget.format('genomic.gtf.gz', gtf) + "\n} &\n")
+        f.write('\nwait\n')
 
     print(loca)
 
 
 def biomart_anno(url, loca):
-    import pandas as pd
-    from biomart import BiomartServer
-
     urlp = urlparse(url)
 
     species = urlp.path.split('/')[1]
@@ -175,18 +171,19 @@ def biomart_anno(url, loca):
 
     os.system('mkdir -p %s' % loca)
 
-    #### ds.attribute_pages
-    s1 = ds.search({'attributes': ['ensembl_gene_id', 'go_id']})
+    #### ds.attribute_pages, ds.attributes
+    s1 = ds.search({'attributes': ['ensembl_gene_id', 'go_id', 'name_1006', \
+    'namespace_1003']})
 
-    gene2go = pd.DataFrame.from_records(
+    gene2GO = pd.DataFrame.from_records(
     [str(i, encoding = 'utf-8').split('\t') for i in s1.iter_lines()], 
-    columns = ['gene', 'GO_id'])
+    columns = ['gene', 'GO_id', "name", "namespace"])
     
-    gene2go = gene2go.loc[gene2go['GO_id'] != '', :]
-    gene2go.drop_duplicates(inplace=True)
-    gene2go.to_csv(loca + '/gene2go.tsv', sep='\t', index=False)
+    gene2GO = gene2GO.loc[gene2GO['GO_id'] != '', :]
+    gene2GO.drop_duplicates(inplace=True)
+    gene2GO.to_csv(loca + '/gene2GO.tsv', sep='\t', index=False)
 
-    print('Saved gene2go.tsv to %s/' % loca)
+    print('Saved %d records to %s/gene2GO.tsv' % (gene2GO.shape[0], loca))
 
     ####
     s2 = ds.search({'attributes': ['ensembl_gene_id', 'entrezgene']})
@@ -199,7 +196,7 @@ def biomart_anno(url, loca):
     gene2entrez.drop_duplicates(inplace=True)
     gene2entrez.to_csv(loca + '/gene2entrez.tsv', sep='\t', index=False)
 
-    print('Saved gene2entrez.tsv to %s/' % loca)
+    print('Saved %d records to %s/gene2entrez.tsv' % (gene2entrez.shape[0], loca))
 
     ####
     try:
@@ -207,51 +204,64 @@ def biomart_anno(url, loca):
 
         gene2kegg = pd.DataFrame.from_records(
         [str(i, encoding = 'utf-8').split('\t') for i in s3.iter_lines()], 
-        columns = ['gene', 'kegg_enzyme'])
+        columns = ['gene', 'KEGG_enzyme'])
 
-        gene2kegg = gene2kegg.loc[gene2kegg['kegg_enzyme'] != '', :]
-        gene2kegg.to_csv(loca + '/gene2kegg.tsv', sep='\t', index=False)
+        gene2kegg = gene2kegg.loc[gene2kegg['KEGG_enzyme'] != '', :]
+        gene2kegg.to_csv(loca + '/gene2KEGG_enzyme.tsv', sep='\t', index=False)
 
-        print('Saved gene2kegg.tsv to %s/' % loca)
+        print('Saved %d records to %s/gene2KEGG_enzyme.tsv' % (gene2kegg.shape[0], loca))
     except:
-        gene2kegg = pd.DataFrame()
         print ("kegg_enzyme is not available")
 
     ####
-    s4 = ds.search({'attributes': ['ensembl_gene_id', 'gene_biotype', \
-    'external_gene_name', 'description']})
-    
-    gene_infor = pd.DataFrame.from_records(
-      [str(i, encoding = 'utf-8').split('\t') for i in s4.iter_lines()], 
-      columns = ['gene', 'gene_biotype', 'gene_name', 'gene_description'])
-
-    ####
-    s5 = ds.search({'attributes': ['ensembl_gene_id', 'uniprotswissprot']})
+    s4 = ds.search({'attributes': ['ensembl_gene_id', 'uniprotswissprot']})
     # uniprotsptrembl
     gene2swissprot = pd.DataFrame.from_records(
-    [str(i, encoding = 'utf-8').split('\t') for i in s5.iter_lines()], 
-    columns = ['gene', 'swissprot'])
+    [str(i, encoding = 'utf-8').split('\t') for i in s4.iter_lines()], 
+    columns = ['gene', 'SwissProt'])
 
-    gene2swissprot = gene2swissprot.loc[gene2swissprot['swissprot'] != '', :]
+    gene2swissprot = gene2swissprot.loc[gene2swissprot['SwissProt'] != '', :]
     gene2swissprot.drop_duplicates(inplace=True)
     gene2swissprot.to_csv(loca + '/gene2swissprot.tsv', sep='\t', index=False)
 
-    print('Saved gene2swissprot.tsv to %s/' % loca)
+    print('Saved %d records to %s/gene2SwissProt.tsv' % (gene2swissprot.shape[0], loca))
+
 
     ####
-    g = gene2go.groupby('gene')['GO_id'].apply(lambda x: ', '.join(x))
+    s5 = ds.search({'attributes': ['ensembl_gene_id', 'gene_biotype', \
+    'external_gene_name', 'description', 'chromosome_name', 'start_position', \
+    'end_position', 'strand']})
+
+    gene_infor = pd.DataFrame.from_records(
+    [str(i, encoding = 'utf-8').split('\t') for i in s5.iter_lines()], \
+    columns = ['gene', 'gene_biotype', 'gene_name', 'gene_description', \
+    'chromosome_name', 'start_position', 'end_position', 'strand'])
+
+    gene_infor['gene_position'] = gene_infor.loc[:, ['chromosome_name', \
+    'start_position', 'end_position', 'strand']].apply(\
+    lambda x: ':'.join(x), axis=1)
+
+    gene_infor.drop(['chromosome_name', 'start_position', 'end_position', \
+    'strand'], axis = 1, inplace=True)
+
+
+    ####
+    g = gene2GO.groupby('gene')['GO_id'].apply(lambda x: ', '.join(x))
     gene_infor['GO_id'] = [ g[i] if i in g else '' for i in gene_infor['gene']]
 
-    if gene2kegg.shape[0] > 0:
-        k = gene2kegg.groupby('gene')['kegg_enzyme'].apply(lambda x: ', '.join(x))
-        gene_infor['kegg_enzyme'] = [ k[i] if i in k else '' for i in gene_infor['gene']]
+    if 'gene2kegg' in locals():
+        k = gene2kegg.groupby('gene')['KEGG_enzyme'].apply(lambda x: ', '.join(x))
+        gene_infor['KEGG_enzyme'] = [ k[i] if i in k else '' for i in gene_infor['gene']]
 
     e = gene2entrez.groupby('gene')['entrez'].apply(lambda x: ', '.join(x))
     gene_infor['entrez'] = [ e[i] if i in e else '' for i in gene_infor['gene']]
 
+    s = gene2swissprot.groupby('gene')['SwissProt'].apply(lambda x: ', '.join(x))
+    gene_infor['SwissProt'] = [ s[i] if i in s else '' for i in gene_infor['gene']]
+
     gene_infor.to_csv(loca + '/gene.infor.tsv', sep='\t', index=False)
 
-    print('Saved gene.infor.tsv to %s/' % loca)
+    print('Saved %d records to %s/gene.infor.tsv' % (gene_infor.shape[0], loca))
 
 
 def search (name):
@@ -275,9 +285,7 @@ def search (name):
 
     return(1 if msg == 'NotFound' else 0)
 
-# arg1 = "Glycine max"
-# arg1 = 'http://plants.ensembl.org/Glycine_max/Info/Index'
-# arg1 = 'http://asia.ensembl.org/Mus_musculus/Info/Index'
+
 cmd, arg1 = os.sys.argv[1:3]
 
 if cmd == 'search':
