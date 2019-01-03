@@ -1,8 +1,8 @@
 #! /usr/bin/python3
 
 __author__ = 'd2jvkpn'
-__version__ = '1.2'
-__release__ = '2018-12-22'
+__version__ = '1.3'
+__release__ = '2010-01-02'
 __project__ = 'https://github.com/d2jvkpn/BioDB'
 __license__ = 'GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)'
 
@@ -35,8 +35,7 @@ http://bacteria.ensembl.org/species.html
 http://protists.ensembl.org/species.html
 '''
 
-if len(os.sys.argv) == 1 or os.sys.argv[1] in ['-h', '--help']:
-    print('''
+HELP = '''
 Search species genome in Ensembl by providing scientific name, and get genome
   ftp  download links and achive gene annotation (GO, kegg_enzyme, entrez) 
   from biomart by provide Ensembl genome address.
@@ -48,9 +47,14 @@ Usage:
     python3 BioDB_Ensemblgenome.py getftp/biomart "ensembl genome address"
     e.g. http://asia.ensembl.org/Mus_musculus/Info/Index
 
+    python3 BioDB_Ensemblgenome.py search getftp biomart "species scientific name"
+
 Note:
     Please use Python3.6 or higher.
-''')
+'''
+
+if len(os.sys.argv) == 1 or os.sys.argv[1] in ['-h', '--help']:
+    print(HELP)
 
     _ = '\nauthor: {}\nversion: {}\nrelease: {}\nproject: {}\nlicense: {}\n'
     __ = [__author__,  __version__, __release__, __project__, __license__]
@@ -237,6 +241,9 @@ def biomart_anno(url, loca):
     columns = ['gene', 'gene_biotype', 'gene_name', 'gene_description', \
     'chromosome_name', 'start_position', 'end_position', 'strand'])
 
+    m = {"-1":"-", "1":"+"}
+    gene_infor['strand'] = [ m[i] if i in m else str(i) for i in gene_infor['strand']]
+
     gene_infor['gene_position'] = gene_infor.loc[:, ['chromosome_name', \
     'start_position', 'end_position', 'strand']].apply(\
     lambda x: ':'.join(x), axis=1)
@@ -281,20 +288,26 @@ def search (name):
         if query.status_code != 200: continue
         msg = query.url; break
 
-    print(msg)
+    return (msg)
 
-    return(1 if msg == 'NotFound' else 0)
+args = os.sys.argv
+val = args[-1]
 
+for cmd in args[1:-1]:
+    if cmd == 'search':
+        out =  search (formatSpeciesName (val))
+        if out != "NotFound":
+        	print(out); val = out
+        else:
+        	os.sys.exit(out)
 
-cmd, arg1 = os.sys.argv[1:3]
+    elif cmd == 'getftp':
+        netloc, path, loca = query(val)
+        getftp (netloc, path, loca, val)
 
-if cmd == 'search':
-    os.sys.exit( search (formatSpeciesName (arg1)))
-elif cmd == 'getftp':
-    netloc, path, loca = query(arg1)
-    getftp (netloc, path, loca, arg1)
-elif cmd == 'biomart':
-    netloc, path, loca = query(arg1)
-    biomart_anno(arg1, loca)
-else:
-    pass
+    elif cmd == 'biomart':
+        netloc, path, loca = query(val)
+        biomart_anno(val, loca)
+        
+    else:
+        os.sys.exit("invalid subcommand {}".format(cmd))
