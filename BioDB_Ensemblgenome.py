@@ -1,8 +1,8 @@
 #! /usr/bin/python3
 
 __author__ = 'd2jvkpn'
-__version__ = '1.3'
-__release__ = '2010-01-02'
+__version__ = '1.4'
+__release__ = '2019-01-17'
 __project__ = 'https://github.com/d2jvkpn/BioDB'
 __license__ = 'GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)'
 
@@ -175,69 +175,12 @@ def biomart_anno(url, loca):
 
     os.system('mkdir -p %s' % loca)
 
-    #### ds.attribute_pages, ds.attributes
-    s1 = ds.search({'attributes': ['ensembl_gene_id', 'go_id', 'name_1006', \
-    'namespace_1003']})
-
-    gene2GO = pd.DataFrame.from_records(
-    [str(i, encoding = 'utf-8').split('\t') for i in s1.iter_lines()], 
-    columns = ['gene', 'GO_id', "name", "namespace"])
-    
-    gene2GO = gene2GO.loc[gene2GO['GO_id'] != '', :]
-    gene2GO.drop_duplicates(inplace=True)
-    gene2GO.to_csv(loca + '/gene2GO.tsv', sep='\t', index=False)
-
-    print('Saved %d records to %s/gene2GO.tsv' % (gene2GO.shape[0], loca))
-
-    ####
-    s2 = ds.search({'attributes': ['ensembl_gene_id', 'entrezgene']})
-
-    gene2entrez = pd.DataFrame.from_records(
-    [str(i, encoding = 'utf-8').split('\t') for i in s2.iter_lines()], 
-    columns = ['gene', 'entrez'])
-    
-    gene2entrez = gene2entrez.loc[gene2entrez['entrez'] != '', :]
-    gene2entrez.drop_duplicates(inplace=True)
-    gene2entrez.to_csv(loca + '/gene2entrez.tsv', sep='\t', index=False)
-
-    print('Saved %d records to %s/gene2entrez.tsv' % (gene2entrez.shape[0], loca))
-
-    ####
-    try:
-        s3 = ds.search({'attributes': ['ensembl_gene_id', 'kegg_enzyme']})
-
-        gene2kegg = pd.DataFrame.from_records(
-        [str(i, encoding = 'utf-8').split('\t') for i in s3.iter_lines()], 
-        columns = ['gene', 'KEGG_enzyme'])
-
-        gene2kegg = gene2kegg.loc[gene2kegg['KEGG_enzyme'] != '', :]
-        gene2kegg.to_csv(loca + '/gene2KEGG_enzyme.tsv', sep='\t', index=False)
-
-        print('Saved %d records to %s/gene2KEGG_enzyme.tsv' % (gene2kegg.shape[0], loca))
-    except:
-        print ("kegg_enzyme is not available")
-
-    ####
-    s4 = ds.search({'attributes': ['ensembl_gene_id', 'uniprotswissprot']})
-    # uniprotsptrembl
-    gene2swissprot = pd.DataFrame.from_records(
-    [str(i, encoding = 'utf-8').split('\t') for i in s4.iter_lines()], 
-    columns = ['gene', 'SwissProt'])
-
-    gene2swissprot = gene2swissprot.loc[gene2swissprot['SwissProt'] != '', :]
-    gene2swissprot.drop_duplicates(inplace=True)
-    gene2swissprot.to_csv(loca + '/gene2swissprot.tsv', sep='\t', index=False)
-
-    print('Saved %d records to %s/gene2SwissProt.tsv' % (gene2swissprot.shape[0], loca))
-
-
-    ####
-    s5 = ds.search({'attributes': ['ensembl_gene_id', 'gene_biotype', \
+    S = ds.search({'attributes': ['ensembl_gene_id', 'gene_biotype', \
     'external_gene_name', 'description', 'chromosome_name', 'start_position', \
     'end_position', 'strand']})
 
     gene_infor = pd.DataFrame.from_records(
-    [str(i, encoding = 'utf-8').split('\t') for i in s5.iter_lines()], \
+    [str(i, encoding = 'utf-8').split('\t') for i in S.iter_lines()], \
     columns = ['gene', 'gene_biotype', 'gene_name', 'gene_description', \
     'chromosome_name', 'start_position', 'end_position', 'strand'])
 
@@ -251,20 +194,31 @@ def biomart_anno(url, loca):
     gene_infor.drop(['chromosome_name', 'start_position', 'end_position', \
     'strand'], axis = 1, inplace=True)
 
+    ####
+    gene2GO = getGO(ds, loca)
+    if gene2GO.shape[0] != 0:
+        g = gene2GO.groupby('gene')['GO_id'].apply(lambda x: ', '.join(x))
+        gene_infor['GO_id'] = [ g[i] if i in g else '' for i in gene_infor['gene']]
 
     ####
-    g = gene2GO.groupby('gene')['GO_id'].apply(lambda x: ', '.join(x))
-    gene_infor['GO_id'] = [ g[i] if i in g else '' for i in gene_infor['gene']]
-
-    if 'gene2kegg' in locals():
+    gene2kegg = getKEGG(ds, loca)
+    if gene2kegg.shape[0] != 0:
         k = gene2kegg.groupby('gene')['KEGG_enzyme'].apply(lambda x: ', '.join(x))
         gene_infor['KEGG_enzyme'] = [ k[i] if i in k else '' for i in gene_infor['gene']]
 
-    e = gene2entrez.groupby('gene')['entrez'].apply(lambda x: ', '.join(x))
-    gene_infor['entrez'] = [ e[i] if i in e else '' for i in gene_infor['gene']]
 
-    s = gene2swissprot.groupby('gene')['SwissProt'].apply(lambda x: ', '.join(x))
-    gene_infor['SwissProt'] = [ s[i] if i in s else '' for i in gene_infor['gene']]
+    ####
+    gene2entrez = getEntrezgene(ds, loca)
+    if gene2entrez.shape[0] != 0:
+        e = gene2entrez.groupby('gene')['entrez'].apply(lambda x: ', '.join(x))
+        gene_infor['entrez'] = [ e[i] if i in e else '' for i in gene_infor['gene']]
+
+
+    ####
+    gene2swissprot = getSwissProt(ds, loca)
+    if gene2swissprot.shape[0] != 0:
+        s = gene2swissprot.groupby('gene')['SwissProt'].apply(lambda x: ', '.join(x))
+        gene_infor['SwissProt'] = [ s[i] if i in s else '' for i in gene_infor['gene']]
 
     gene_infor.to_csv(loca + '/gene.infor.tsv', sep='\t', index=False)
 
@@ -290,6 +244,88 @@ def search (name):
 
     return (msg)
 
+
+def getGO(ds, loca):
+    gene2GO = pd.DataFrame()
+
+    try:
+        s = ds.search({'attributes': ['ensembl_gene_id', 'go_id', 'name_1006', \
+        'namespace_1003']})
+    except:
+        return gene2GO
+
+
+    gene2GO = pd.DataFrame.from_records(
+    [str(i, encoding = 'utf-8').split('\t') for i in s.iter_lines()], 
+    columns = ['gene', 'GO_id', "name", "namespace"])
+    
+    gene2GO = gene2GO.loc[gene2GO['GO_id'] != '', :]
+    gene2GO.drop_duplicates(inplace=True)
+    gene2GO.to_csv(loca + '/gene2GO.tsv', sep='\t', index=False)
+
+    print('Saved %d records to %s/gene2GO.tsv' % (gene2GO.shape[0], loca))
+
+    return gene2GO
+
+def getEntrezgene(ds, loca):
+    gene2entrez = pd.DataFrame()
+    try:
+        s = ds.search({'attributes': ['ensembl_gene_id', 'entrezgene']})
+    except:
+        return gene2entrez
+
+    gene2entrez = pd.DataFrame.from_records(
+    [str(i, encoding = 'utf-8').split('\t') for i in s.iter_lines()], 
+    columns = ['gene', 'entrez'])
+    
+    gene2entrez = gene2entrez.loc[gene2entrez['entrez'] != '', :]
+    gene2entrez.drop_duplicates(inplace=True)
+    gene2entrez.to_csv(loca + '/gene2entrez.tsv', sep='\t', index=False)
+
+    print('Saved %d records to %s/gene2entrez.tsv' % (gene2entrez.shape[0], loca))
+    return gene2entrez
+
+
+def getKEGG(ds, loca):
+    gene2kegg = pd.DataFrame()
+
+    try:
+        s = ds.search({'attributes': ['ensembl_gene_id', 'kegg_enzyme']})
+    except:
+         return gene2kegg
+
+    gene2kegg = pd.DataFrame.from_records(
+    [str(i, encoding = 'utf-8').split('\t') for i in s.iter_lines()], 
+    columns = ['gene', 'KEGG_enzyme'])
+
+    gene2kegg = gene2kegg.loc[gene2kegg['KEGG_enzyme'] != '', :]
+    gene2kegg.to_csv(loca + '/gene2KEGG_enzyme.tsv', sep='\t', index=False)
+
+    print('Saved %d records to %s/gene2KEGG_enzyme.tsv' % (gene2kegg.shape[0], loca))
+    return gene2kegg
+
+
+def getSwissProt(ds, loca):
+    gene2swissprot = pd.DataFrame()
+
+    try:
+        s = ds.search({'attributes': ['ensembl_gene_id', 'uniprotswissprot']})
+        # uniprotsptrembl
+    except:
+        return gene2swissprot
+
+    gene2swissprot = pd.DataFrame.from_records(
+    [str(i, encoding = 'utf-8').split('\t') for i in s.iter_lines()], 
+    columns = ['gene', 'SwissProt'])
+
+    gene2swissprot = gene2swissprot.loc[gene2swissprot['SwissProt'] != '', :]
+    gene2swissprot.drop_duplicates(inplace=True)
+    gene2swissprot.to_csv(loca + '/gene2swissprot.tsv', sep='\t', index=False)
+
+    print('Saved %d records to %s/gene2SwissProt.tsv' % (gene2swissprot.shape[0], loca))
+    return gene2swissprot
+
+
 args = os.sys.argv
 val = args[-1]
 
@@ -297,9 +333,9 @@ for cmd in args[1:-1]:
     if cmd == 'search':
         out =  search (formatSpeciesName (val))
         if out != "NotFound":
-        	print(out); val = out
+            print(out); val = out
         else:
-        	os.sys.exit(out)
+            os.sys.exit(out)
 
     elif cmd == 'getftp':
         netloc, path, loca = query(val)
