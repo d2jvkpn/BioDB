@@ -1,0 +1,66 @@
+<!--Taxonomy.html-->
+<!doctype html>
+<html>
+
+<head>
+  <meta charset = "utf-8">
+  <meta http-equiv = "Content-Type"  content="text/html; charset=utf-8">
+
+  <title>BioDB {{.Target}} Result</title>
+</head>
+
+<body>
+  <br></br>
+  
+  <div align="center">
+    <p>
+      <i> <b>{{.Target}}</b></i> Results of <i><b>{{.Term}}</b> </i>
+    </p>
+  <div>
+
+  <p align="center">
+    <button onclick="goBack()"> Go back </button>
+  </p>
+
+  <script>
+    function goBack() {
+      window.history.back();
+    }
+  </script>
+
+  <table style="text-align: left" border="1" cellpadding="4" width="80%">
+    <tr >
+      <th></th>
+      <th>Taxon id</th>
+      <th>Scientific name</th>
+      <th>Taxon rank</th>
+      <th>Parent id</th>
+      <th>New query</th>
+    <tr>
+
+    {{range $i, $r := .Taxonlist}}
+      <tr>
+        <td><b>No.{{Add $i 1}}</b></td>
+        <td>{{.Taxon_id}}</td>
+        <td><i>{{.Scientific_name}}</i></td>
+        <td>{{.Taxon_rank}}</td>
+
+        <td>
+		  <a href="/search/?target=Taxonomy&term={{.Parent_id}}">
+            {{.Parent_id}}
+          </a>
+		</td>
+
+        <td>
+          <a href="/search/?target=Subclass&term={{.Taxon_id}}"> Subclass </a>;
+          <a href="/search/?target=Genome&term={{.Taxon_id}}"> Genome </a>;
+          <a href="/search/?target=GO&term={{.Taxon_id}}">GO</a>;
+          <a href="/search/?target=Pathway&term={{.Taxon_id}}">Pathway</a>
+        </td>
+
+      </tr>
+    {{end}}
+  </table>
+
+</body>
+</html>
