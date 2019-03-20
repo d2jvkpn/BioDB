@@ -30,7 +30,7 @@ const (
 `
 	LISENSE = `
 author: d2jvkpn
-version: 01.0
+version: 1.0
 release: 2019-03-18
 project: https://github.com/d2jvkpn/BioDB
 lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
