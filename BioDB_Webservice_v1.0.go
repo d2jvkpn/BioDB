@@ -46,7 +46,6 @@ func main() {
 
 	search := router.Group("search/")
 	search.GET("/", func(c *gin.Context) { biodb.Search(c, DB) })
-	search.POST("/", func(c *gin.Context) { biodb.Search(c, DB) })
 
 	api := router.Group("api/")
 	api.GET("/", func(c *gin.Context) { biodb.API(c, DB) })
