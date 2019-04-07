@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/d2jvkpn/gopkgs/biodb2"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"time"
+	"io"
 	"regexp"
 	"strconv"
 )
@@ -18,6 +19,7 @@ import (
 var (
 	DB     *sql.DB
 	router *gin.Engine
+	fh     *os.File
 	port   string
 )
 
@@ -30,8 +32,8 @@ const (
 `
 	LISENSE = `
 author: d2jvkpn
-version: 1.0
-release: 2019-03-18
+version: 1.1
+release: 2019-04-07
 project: https://github.com/d2jvkpn/BioDB
 lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 `
@@ -39,19 +41,20 @@ lisense: GPLv3 (https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 func main() {
 	defer DB.Close()
+	defer fh.Close()
 
 	router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "Search.html", nil)
 	})
 
 	search := router.Group("search/")
-	search.GET("/", func(c *gin.Context) { biodb.Search(c, DB) })
+	search.GET("/", func(c *gin.Context) { Search(c, DB) })
 
 	api := router.Group("api/")
-	api.GET("/", func(c *gin.Context) { biodb.API(c, DB) })
+	api.GET("/", func(c *gin.Context) { API(c, DB) })
 
 	download := router.Group("download/")
-	download.GET("/", func(c *gin.Context) { biodb.Download(c, DB) })
+	download.GET("/", func(c *gin.Context) { Download(c, DB) })
 
 	router.Run(port)
 }
@@ -73,7 +76,36 @@ func init() {
 	err = ValidPort(&port)
 	ErrExit(err)
 
-	router = gin.Default()
+	s := fmt.Sprintf("%s:%s@%s/BioDB", DBuser, DBpasswd, DBhost)
+	DB, err = sql.Open("mysql", s)
+	ErrExit(err)
+
+	// router = gin.Default()
+	router = gin.New()
+
+	// time.Now().Format("2006-01-02"), time.Now().UnixNano()
+	fn := fmt.Sprintf("gin_%X.log", time.Now().Unix())
+	fh, err = os.Create(fn)
+	ErrExit(err)
+	log.Println("Log will be written in", fn)
+
+	gin.DefaultWriter = io.MultiWriter(fh)
+
+	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
+		return fmt.Sprintf("%s - %s %d %s %s %s %s \"%s\" \"%s\"\n",
+			param.ClientIP,
+			param.TimeStamp.Format(time.RFC3339),
+			param.StatusCode,
+			param.Method,
+			param.Path,
+			param.Request.Proto,
+			param.Latency,
+			param.Request.UserAgent(),
+			param.ErrorMessage,
+		)
+	}))
+
+	router.Use(gin.Recovery())
 
 	router.SetFuncMap(template.FuncMap{
 		"Add": Add,
@@ -81,9 +113,6 @@ func init() {
 
 	router.LoadHTMLGlob("templates/*.html")
 
-	s := fmt.Sprintf("%s:%s@%s/BioDB", DBuser, DBpasswd, DBhost)
-	DB, err = sql.Open("mysql", s)
-	ErrExit(err)
 }
 
 func Add(a, b int) string {
