@@ -83,7 +83,7 @@ func init() {
 	router = gin.New() // router = gin.Default()
 
 	// time.Now().Format("2006-01-02"), time.Now().UnixNano()
-	fn := fmt.Sprintf("gin_%X.log", time.Now().Unix())
+	fn := fmt.Sprintf("log_%X.txt", time.Now().Unix())
 	fh, err = os.Create(fn)
 	ErrExit(err)
 
