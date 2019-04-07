@@ -80,19 +80,19 @@ func init() {
 	DB, err = sql.Open("mysql", s)
 	ErrExit(err)
 
-	// router = gin.Default()
-	router = gin.New()
+	router = gin.New() // router = gin.Default()
 
 	// time.Now().Format("2006-01-02"), time.Now().UnixNano()
 	fn := fmt.Sprintf("gin_%X.log", time.Now().Unix())
 	fh, err = os.Create(fn)
 	ErrExit(err)
+
 	log.Println("Log will be written in", fn)
 
 	gin.DefaultWriter = io.MultiWriter(fh)
 
 	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		return fmt.Sprintf("%s - %s %d %s %s %s %s \"%s\" \"%s\"\n",
+		return fmt.Sprintf("%s  %s  %d  %s %s %s %s  \"%s\"  \"%s\"\n",
 			param.ClientIP,
 			param.TimeStamp.Format(time.RFC3339),
 			param.StatusCode,
@@ -113,6 +113,7 @@ func init() {
 
 	router.LoadHTMLGlob("templates/*.html")
 
+	fmt.Fprintf(fh, "BioDB_Webservice start at %s\n\n", time.Now().Format(time.RFC3339))
 }
 
 func Add(a, b int) string {
