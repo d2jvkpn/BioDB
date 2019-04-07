@@ -7,13 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"os"
-	"time"
-	"io"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 var (
