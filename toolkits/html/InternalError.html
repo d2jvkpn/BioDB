@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset = "utf-8">
+  <meta http-equiv = "Content-Type"  content="text/html; charset=utf-8">
+
+  <title>BioDB Internal Error</title>
+</head>
+
+<body>
+  <br></br>
+
+  <div align="center">
+	<p>
+      Sorry, an internal error occured
+      (quering <i> <b>{{.Taxon}} </b></i> in <i><b>{{.Table}} </b></i>)
+    </p>
+  <div>
+
+  <p align="center">
+    <button onclick="goBack()"> Go back </button>
+  </p>
+
+  <script>
+    function goBack() {
+      window.history.back();
+    }
+  </script>
+
+</body>
+</html>
