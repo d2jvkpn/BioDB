@@ -82,7 +82,6 @@ func init() {
 
 	router = gin.New() // router = gin.Default()
 
-	// time.Now().Format("2006-01-02"), time.Now().UnixNano()
 	fn := fmt.Sprintf("log_%X.txt", time.Now().Unix())
 	fh, err = os.Create(fn)
 	ErrExit(err)
@@ -113,7 +112,8 @@ func init() {
 
 	router.LoadHTMLGlob("templates/*.html")
 
-	fmt.Fprintf(fh, "BioDB_Webservice start at %s\n\n", time.Now().Format(time.RFC3339))
+	fmt.Fprintf(fh, "BioDB_Webservice start at %s\n\n",
+		time.Now().Format(time.RFC3339))
 }
 
 func Add(a, b int) string {
