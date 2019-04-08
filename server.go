@@ -52,6 +52,7 @@ func Search(c *gin.Context, DB *sql.DB) {
 
 	default:
 		c.HTML(http.StatusBadRequest, "InvalidQuery.html", &query)
+		return
 	}
 
 	switch err {
@@ -96,6 +97,7 @@ func API(c *gin.Context, DB *sql.DB) {
 
 	default:
 		c.JSON(http.StatusBadRequest, nil)
+		return
 	}
 
 	switch err {
